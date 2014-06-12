@@ -175,6 +175,10 @@ class Spectra:
             print i
             print self.m.parameters_as_csv(selection=i,witherrors=True)
     
+    # ---
+    # Helper functions, might make private
+    # ---     
+    
     def guess_peak_width(self,max_width = 50):
         """ Find an initial guess for the peak with of the data imported, use in peak finding and model buildings
         
@@ -202,6 +206,8 @@ class Spectra:
         """ Find the fwhm of a point using a very simplisitic algorigthm. Works on base data set. Has a hard limit for peak width """
         left = right = position
         half_max = self.s.y[position]/2
+        
+        # change max_widht to function of data set
         
         # make sure index does not get out of bounds
         while (self.s.y[left] > half_max and left > 0 ):
