@@ -13,13 +13,13 @@ def main():
     print "Starting script ... "
     
     print "Loading file ... "    
-    #S = Spectra('neon72.txt')
-    #S = Spectra('80K-426c.txt')
-    S = Spectra('PMDA-KBr-1-75x1.CSV')
+    #S = Spectra('samples/neon72.txt')
+    #S = Spectra('samples/80K-426c.txt')
+    S = Spectra('samples/PMDA-KBr-1-75x1.CSV')
     print S.data_max, S.data_max_pos, S.test_peak_width
 
     print "Finding background ... "    
-    S.find_background(sub_range=3,poly_deg=1,smoothing=5)    
+    S.find_background()    
     # Plot data and bg    
     plt.figure(1)
     plt.plot(S.s.x,S.s.y,'-')
