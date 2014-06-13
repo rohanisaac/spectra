@@ -5,6 +5,9 @@ Analyze spectral data using combination of numpy, scipy, peak-o-mat and some sim
 @author: Rohan Isaac
 """
 
+# keep only one spec object, lots of y-data
+# print in class functions, not in driver
+
 from __future__ import division
 from scipy import signal
 import numpy as np
@@ -43,11 +46,13 @@ class Spectra:
         
         # other spec objects        
         self.active = Spec(self.origin.x,self.origin.y,'active')
-        self.bg = Spec(self.origin.x,np.zeros(self.data_points),'background')
+        
         
         # basic model attributes
-        
+    
         # really only need one spec object, can use y-lists for the rest
+    
+        self.guess_peak_width()
         
 
     def find_background(self,sub_range=None,poly_deg=3,smoothing=5):
@@ -62,13 +67,13 @@ class Spectra:
         5. Returns original x-data and y-values of x-data evaluated with the polynomial
         """
         if sub_range == None:
-            sub_range = (self.max_points/20)
+            sub_range = (self.data_points/20)
             
         # smooth y-data, maybe add poly order as a parameter
         smooth_y = savitzky_golay(self.origin.y,smoothing,3)
     
         # find # of sub-ranges/intervals
-        intervals = int(math.ceil(len(self.s.y)/sub_range))
+        intervals = int(math.ceil(self.data_points/sub_range))
         
         # find min of each subinterval and place it at mid point of 
         bg_x = np.zeros(intervals)
@@ -85,7 +90,7 @@ class Spectra:
             
         bg_poly = np.polyfit(bg_x,bg_y,poly_deg)    # polynomial coefficeints of fit
         bg = np.poly1d(bg_poly) # evaluate polynomial
-        self.bg.y = bg(self.origin.x)
+        self.bg = Spec(self.origin.x,bg(self.origin.x),'background')
         
     def subtract_background(self):
         """ Subtract background from active spectra """
@@ -167,7 +172,7 @@ class Spectra:
             # also make sure index does not get out of bounds
             while (self.active.y[left]>half_max and left > 0 ):
                 left = left - 1
-            while (self.active.y[right] > half_max and right < (self.max_points-1)):
+            while (self.active.y[right] > half_max and right < (self.data_points-1)):
                 right = right + 1
 
             # find distance between these two point
@@ -187,7 +192,7 @@ class Spectra:
         ## Obviously not, since this is only for plotting.
         # self.x = np.linspace(min(self.s.x),max(self.s.x),5*self.max_points)
         self.model_x = self.origin.x
-        self.model_y = self.test_model.evaluate(self.model_x)
+        self.model_y = test_model.evaluate(self.model_x)
         
         self.model = test_model
         
@@ -213,48 +218,47 @@ class Spectra:
     # ---     
     
     def guess_peak_width(self,max_width = 50):
-        """ Find an initial guess for the peak with of the data imported, use in peak finding and model buildings
+        """ Find an initial guess for the peak with of the data imported, use in peak finding and model buildings and other major functions, probably should call in the constructor
         
         Details
         -------
         Locates the max value in the data
-        Finds the peak width associated with this data (using simple technique in model building)
+        Finds the peak width associated with this data
         """
-        self.data_max = np.amax(self.s.y)
-        self.data_max_pos = np.amax( np.where(self.data_max==self.s.y) )
+        self.data_max = max(self.active.y)
+        self.data_max_pos = max( np.where(self.data_max==self.active.y) )
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
         
         
     def remove_spikes(self,strength = 0.5):
-        """ Attempts to remove spikes in data set using a simple test of the pixels around it. Fractional value of strenght needed. Does not modify data, but returns a copy. """
+        """ Attempts to remove spikes in active set using a simple test of the pixels around it. Fractional value of strength needed."""
         mean = lambda x,y: (x+y)/2
-        y = self.s.y
-        data_max = np.amax(y)
+        
+        y = self.active.y
+        data_max = max(y)
         for i in range(1,len(y)-1):
             if (np.abs( y[i] -  mean(y[i-1],y[i+1]) )/ data_max ) > strength:
                 y[i] = mean(y[i-1],y[i+1])
-        return y
         
-    def find_fwhm(self,position, max_width=50):
-        """ Find the fwhm of a point using a very simplisitic algorigthm. Works on base data set. Has a hard limit for peak width """
-        left = right = position
-        half_max = self.s.y[position]/2
+        self.active.y = y
         
-        # change max_widht to function of data set
+    def find_fwhm(self,position):
+        """ Find the fwhm of a point using a very simplisitic algorigthm. Could return very large width. """
+        left = position
+        right = position
+        half_max = self.active.y[position]/2
+        
+        # change max_width to function of data set
         
         # make sure index does not get out of bounds
-        while (self.s.y[left] > half_max and left > 0 ):
+        while (self.active.y[left] > half_max and left > 0 ):
             left = left-1
-        while (self.s.y[right] > half_max and right < (self.max_points-1)):
+        while (self.active.y[right] > half_max and right < (self.data_points-1)):
             right = right + 1
             
         # left = find index to left when height is below half_max
         # right same as above
         # find distance between these two point
-        fwhm = self.s.x[right] - self.s.x[left]
-            
-        # make sure doesn't blow up
-        if fwhm > max_width:
-            fwhm = max_width
+        fwhm = self.active.x[right] - self.active.x[left]
             
         return fwhm

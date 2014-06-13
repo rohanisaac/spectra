@@ -16,49 +16,47 @@ def main():
     #S = Spectra('samples/neon72.txt')
     #S = Spectra('samples/80K-426c.txt')
     S = Spectra('samples/PMDA-KBr-1-75x1.CSV')
-    print S.data_max, S.data_max_pos, S.test_peak_width
 
     print "Finding background ... "    
     S.find_background()    
     # Plot data and bg    
     plt.figure(1)
-    plt.plot(S.s.x,S.s.y,'-')
+    plt.plot(S.origin.x,S.origin.y,'-')
     plt.plot(S.bg.x,S.bg.y,'-r')
-    plt.plot(S.s.x[S.slmin],S.s.y[S.slmin],'o')
+    #plt.plot(S.s.x[S.slmin],S.s.y[S.slmin],'o')
     
     print "Subtracting background ... "
     S.subtract_background()
     
-    y2 = S.remove_spikes()
-    plt.figure(4)
-    plt.plot(S.s.x,y2,'-')
+    #y2 = S.remove_spikes()
+    #plt.figure(4)
+    #plt.plot(S..x,y2,'-')
 
-    """print "Looking for peaks ... "  
+    print "Looking for peaks ... "  
     S.find_peaks()
     print "Found " + str(S.num_peaks) + " peaks."
     print S.peak_pos
     
     print "Building model ... "
     S.build_model()    
-    """
+    
     # plot spectra, model, found_peaks
     plt.figure(2)
-    plt.plot(S.s.x,S.s.y,'-')
-    """    
-    plt.plot(S.x,S.y,'b-')    
-    plt.plot(S.s.x[S.peak_pos],S.s.y[S.peak_pos],'or')
+    plt.plot(S.active.x,S.active.y,'-')
+        
+    plt.plot(S.model_x,S.model_y,'b-')    
+    plt.plot(S.active.x[S.peak_pos],S.active.y[S.peak_pos],'or')
 
     print "Fitting Data"
     S.fit_data()
-    print S.res[-1]
     
     # plot spectra,fit
     plt.figure(3)
-    plt.plot(S.s.x,S.s.y,'ko',alpha=0.3)
-    plt.plot(S.x,S.y,'r-')
+    plt.plot(S.active.x,S.active.y,'ko',alpha=0.3)
+    plt.plot(S.model_x,S.model_y,'r-')
 
     S.output_results()
-    """
+    
 if __name__ == "__main__":
     main()
     
