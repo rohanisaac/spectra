@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 #import guiqwt.pyplot as  # alternative plot
 from spectra import Spectra
 
+a =10
 # Driver function    
 #making it a script so it is easier to debug
 plt.close('all')

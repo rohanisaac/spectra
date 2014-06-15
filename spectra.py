@@ -9,7 +9,7 @@ Analyze spectral data using combination of numpy, scipy, peak-o-mat and some sim
 # print in class functions, not in driver
 
 from __future__ import division
-from scipy import signal,interpolate
+from scipy import signal,interpolate, fftpack
 import numpy as np
 import sys, os, math
 
@@ -73,17 +73,20 @@ class Spectra:
         print "Finding background ... " 
         
         if sub_range == None:
-            sub_range = (self.data_points/20)
+            sub_range = (self.data_points/5)
             
         # smooth y-data, maybe add poly order as a parameter
-        smooth_y = savitzky_golay(self.active,smoothing,3)
+        # smooth_y = savitzky_golay(self.active,smoothing,3)
+        smooth_y = self.filter_high_freq(self.active)
     
         # find # of sub-ranges/intervals
         intervals = int(math.ceil(self.data_points/sub_range))
         
         # find min of each subinterval and place it at mid point of 
-        bg_x = np.zeros(intervals)
-        bg_y = np.zeros(intervals)
+        #bg_x = np.zeros(intervals)
+        #bg_y = np.zeros(intervals)
+        bg_x = []
+        bg_y = []
         for i in range(intervals):
             pos = i*sub_range
             half_range = int(math.floor(sub_range/2))
@@ -94,8 +97,8 @@ class Spectra:
             bg_y_test = min(smooth_y[pos:(pos+sub_range)])
             
             if bg_y_test/self.data_max < .3:
-                bg_x[i] = bg_x_test
-                bg_y[i] = bg_y_test
+                bg_x.append(bg_x_test)
+                bg_y.append(bg_y_test)
             
         #self.slmin = signal.argrelmin(sg.savitzky_golay(y_data,9,5))
         # also find the 10% of min data points in the data set and poly fit them
@@ -107,7 +110,11 @@ class Spectra:
         bg_x_full = [self.x[0]] + bg_x + [self.x[-1]]
         bg_y_full = [smooth_y[0]] + bg_y + [smooth_y[-1]]
         
-        bg_spline = interpolate.interp1d(bg_x_full,bg_y_full)
+        # smooth this data
+        #bg_y_full = signal.medfilt(bg_y_full,5)        
+        
+        bg_spline = interpolate.interp1d(bg_x_full,bg_y_full,kind='quadratic')
+        
         self.bg = bg_spline(self.x)
         
     def subtract_background(self):
@@ -312,3 +319,9 @@ class Spectra:
         fwhm = self.x[right] - self.x[left]
             
         return fwhm
+        
+    def filter_high_freq(self, data):
+        """ Filter high frequency data using fft """
+        trans = fftpack.fft(data)
+        trans[2:] = np.zeros(len(trans)-2)
+        return fftpack.ifft(trans)
