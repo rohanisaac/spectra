@@ -8,55 +8,44 @@ import matplotlib.pyplot as plt
 from spectra import Spectra
 
 # Driver function    
-def main():
-    plt.close('all')
-    print "Starting script ... "
-    
-    print "Loading file ... "    
-    #S = Spectra('samples/neon72.txt')
-    #S = Spectra('samples/80K-426c.txt')
-    S = Spectra('samples/PMDA-KBr-1-75x1.CSV')
+#making it a script so it is easier to debug
+plt.close('all')
+print "Starting script ... "
 
-    print "Finding background ... "    
-    S.find_background()    
-    # Plot data and bg    
-    plt.figure(1)
-    plt.plot(S.origin.x,S.origin.y,'-')
-    plt.plot(S.bg.x,S.bg.y,'-r')
-    #plt.plot(S.s.x[S.slmin],S.s.y[S.slmin],'o')
-    
-    print "Subtracting background ... "
-    S.subtract_background()
-    
-    #y2 = S.remove_spikes()
-    #plt.figure(4)
-    #plt.plot(S..x,y2,'-')
+#S = Spectra('samples/neon72.txt')
+#S = Spectra('samples/80K-426c.txt')
+S = Spectra('samples/PMDA-KBr-1-75x1.CSV')
+   
+S.find_background()  
 
-    print "Looking for peaks ... "  
-    S.find_peaks()
-    print "Found " + str(S.num_peaks) + " peaks."
-    print S.peak_pos
-    
-    print "Building model ... "
-    S.build_model()    
-    
-    # plot spectra, model, found_peaks
-    plt.figure(2)
-    plt.plot(S.active.x,S.active.y,'-')
-        
-    plt.plot(S.model_x,S.model_y,'b-')    
-    plt.plot(S.active.x[S.peak_pos],S.active.y[S.peak_pos],'or')
+# Plot data and bg    
+plt.figure(1)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.bg,'-r')
 
-    print "Fitting Data"
-    S.fit_data()
-    
-    # plot spectra,fit
-    plt.figure(3)
-    plt.plot(S.active.x,S.active.y,'ko',alpha=0.3)
-    plt.plot(S.model_x,S.model_y,'r-')
+S.subtract_background()
 
-    S.output_results()
-    
-if __name__ == "__main__":
-    main()
-    
+plt.figure(4)
+plt.plot(S.x,S.active,'b-')    
+S.remove_spikes()
+plt.plot(S.x,S.active,'r-')
+
+S.guess_peak_width(max_width=50)
+S.find_peaks(limit=30)
+S.build_model()    
+
+# plot spectra, model, found_peaks
+plt.figure(2)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.model_data,'r-')    
+plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
+
+
+S.fit_data()
+
+# plot spectra,fit
+plt.figure(3)
+plt.plot(S.x,S.active,'g-',alpha=0.3)
+plt.plot(S.x,S.model_data,'r-')
+
+S.output_results()
