@@ -1,0 +1,33 @@
+\begin{theindex}
+\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
+
+  \bigletter B
+  \item build\_model() (spectra.Spectra method), \hyperpage{3}
+
+  \indexspace
+  \bigletter F
+  \item filter\_high\_freq() (spectra.Spectra method), \hyperpage{3}
+  \item find\_background() (spectra.Spectra method), \hyperpage{3}
+  \item find\_fwhm() (spectra.Spectra method), \hyperpage{3}
+  \item find\_peaks() (spectra.Spectra method), \hyperpage{3}
+  \item fit\_data() (spectra.Spectra method), \hyperpage{3}
+
+  \indexspace
+  \bigletter G
+  \item guess\_peak\_width() (spectra.Spectra method), \hyperpage{3}
+
+  \indexspace
+  \bigletter O
+  \item output\_results() (spectra.Spectra method), \hyperpage{4}
+
+  \indexspace
+  \bigletter R
+  \item remove\_spikes() (spectra.Spectra method), \hyperpage{4}
+
+  \indexspace
+  \bigletter S
+  \item savitzky\_golay() (in module savitzky\_golay), \hyperpage{5}
+  \item Spectra (class in spectra), \hyperpage{3}
+  \item subtract\_background() (spectra.Spectra method), \hyperpage{4}
+
+\end{theindex}
