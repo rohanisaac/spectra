@@ -1,6 +1,6 @@
 """
 Spectra class
-------- -----
+-------------
 Analyze spectral data using combination of numpy, scipy, peak-o-mat and some simple algorithms
 @author: Rohan Isaac
 """
@@ -127,7 +127,7 @@ class Spectra:
         transformation from `scipy.signal`
         
         Variables modified
-        --------- --------
+        ------------------
         peak_pos: list of indicies associated with peak positions
         num_peaks: # of peaks found
         
@@ -170,13 +170,17 @@ class Spectra:
     def build_model(self, peak_type='LO', max_width=None):
         """ Builds a peak-o-mat model of peaks in listed by index in `peak_pos`
         
-        Peaks can be of the following types: 
-        (to setup custom peaks and more, see peak-o-mat docs)
-        LO: symmetric lorentzian
-        GA: symmetric gaussain
-        VO: voigt profile
-        PVO: psuedo-voigt profile
-        FAN: fano lineshape        
+        Parameters
+        ----------
+        peak_type : string
+            Peaks can be of the following types: 
+            (to setup custom peaks and more, see peak-o-mat docs)
+            
+            | 'LO' : symmetric lorentzian
+            | 'GA' : symmetric gaussain
+            | 'VO' : voigt profile
+            | 'PVO' : psuedo-voigt profile
+            | 'FAN' : fano lineshape        
         
         
         Peaks can veof default type lorentzian (LO). Uses some basic algorithms 
@@ -271,7 +275,12 @@ class Spectra:
         use in peak finding and model buildings and other major functions, 
         probably should call in the constructor
         
-        Details
+        Parameters
+        ----------
+        max_width : int
+            Max width of peaks to search for
+        
+        Notes
         -------
         Locates the max value in the data
         Finds the peak width associated with this data
@@ -321,7 +330,18 @@ class Spectra:
         return fwhm
         
     def filter_high_freq(self, data):
-        """ Filter high frequency data using fft """
+        """ Filter high frequency data using fft 
+        
+        Parameters
+        ----------
+        data : np.array
+            Data to filter
+            
+        Returns
+        -------
+        data : np.array
+            Data with high frequcny components removed
+        """
         trans = fftpack.fft(data)
         trans[2:] = np.zeros(len(trans)-2)
         return fftpack.ifft(trans)
