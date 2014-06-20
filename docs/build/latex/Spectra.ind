@@ -10,11 +10,11 @@
   \item find\_background() (spectra.Spectra method), \hyperpage{3}
   \item find\_fwhm() (spectra.Spectra method), \hyperpage{3}
   \item find\_peaks() (spectra.Spectra method), \hyperpage{3}
-  \item fit\_data() (spectra.Spectra method), \hyperpage{3}
+  \item fit\_data() (spectra.Spectra method), \hyperpage{4}
 
   \indexspace
   \bigletter G
-  \item guess\_peak\_width() (spectra.Spectra method), \hyperpage{3}
+  \item guess\_peak\_width() (spectra.Spectra method), \hyperpage{4}
 
   \indexspace
   \bigletter O

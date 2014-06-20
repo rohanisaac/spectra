@@ -1,7 +1,8 @@
 """
 Spectra class
 -------------
-Analyze spectral data using combination of numpy, scipy, peak-o-mat and some simple algorithms
+Analyze spectral data using combination of numpy, scipy, peak-o-mat and 
+some simple algorithms
 @author: Rohan Isaac
 """
 
@@ -9,14 +10,15 @@ Analyze spectral data using combination of numpy, scipy, peak-o-mat and some sim
 # print in class functions, not in driver
 
 from __future__ import division
-from scipy import signal,interpolate, fftpack
+from scipy import signal, interpolate, fftpack
 import numpy as np
 import sys, os, math
 
 PATH = os.getcwd()+'/'
 
-# better smoothing funciton; should be in np.signal, but import it locally till it appears
-from savitzky_golay import savitzky_golay
+# better smoothing funciton; should be in np.signal, but import it locally 
+# till it appears
+from helper_functions import *
 
 # peak-o-mat stuff
 sys.path.append(PATH + '../peak-o-mat-1.1.9/')
@@ -58,7 +60,7 @@ class Spectra:
         self.guess_peak_width()
         
 
-    def find_background(self,sub_range=None,poly_deg=3,smoothing=5):
+    def find_background(self, sub_range=None, poly_deg=3, smoothing=5):
         """ Attempts to find the background of the spectra, 
         and updates the `bg` array
         
@@ -77,7 +79,7 @@ class Spectra:
             
         # smooth y-data, maybe add poly order as a parameter
         # smooth_y = savitzky_golay(self.active,smoothing,3)
-        smooth_y = self.filter_high_freq(self.active)
+        # smooth_y = self.filter_high_freq(self.active)
     
         # find # of sub-ranges/intervals
         intervals = int(math.ceil(self.data_points/sub_range))
@@ -101,19 +103,21 @@ class Spectra:
                 bg_y.append(bg_y_test)
             
         #self.slmin = signal.argrelmin(sg.savitzky_golay(y_data,9,5))
-        # also find the 10% of min data points in the data set and poly fit them
+        # also find the 10% of min data points in the data set and poly fit
+            # them
         # find the space between peaks and fit these
             
-        #bg_poly = np.polyfit(bg_x,bg_y,poly_deg)    # polynomial coefficeints of fit
+        #bg_poly = np.polyfit(bg_x,bg_y,poly_deg)    # polynomial coefficeints
+            # of fit
         #bg = np.poly1d(bg_poly) # evaluate polynomial
         #self.bg = bg(self.origin.x)
         bg_x_full = [self.x[0]] + bg_x + [self.x[-1]]
         bg_y_full = [smooth_y[0]] + bg_y + [smooth_y[-1]]
         
         # smooth this data
-        #bg_y_full = signal.medfilt(bg_y_full,5)        
+        #bg_y_full = signal.medfilt(bg_y_full, 5)        
         
-        bg_spline = interpolate.interp1d(bg_x_full,bg_y_full,kind='quadratic')
+        bg_spline = interpolate.interp1d(bg_x_full, bg_y_full, kind='quadratic')
         
         self.bg = bg_spline(self.x)
         
@@ -122,7 +126,7 @@ class Spectra:
         print "Subtracting background ... "
         self.active = self.active - self.bg
 
-    def find_peaks(self,lower=None,upper=None,threshold=5,limit=20):
+    def find_peaks(self, lower=None, upper=None, threshold=5, limit=20):
         """ Find peaks in actve data set using continous wavelet 
         transformation from `scipy.signal`
         

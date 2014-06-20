@@ -143,11 +143,14 @@ Builds a peak-o-mat model of peaks in listed by index in \emph{peak\_pos}
 
 Peaks can be of the following types: 
 (to setup custom peaks and more, see peak-o-mat docs)
-`LO' : symmetric lorentzian
-`GA' : symmetric gaussain
-`VO' : voigt profile
-`PVO' : psuedo-voigt profile
-`FAN' : fano lineshape
+
+\begin{DUlineblock}{0em}
+\item[] `LO' : symmetric lorentzian
+\item[] `GA' : symmetric gaussain
+\item[] `VO' : voigt profile
+\item[] `PVO' : psuedo-voigt profile
+\item[] `FAN' : fano lineshape        
+\end{DUlineblock}
 \end{quote}
 
 \textbf{Peaks can veof default type lorentzian (LO). Uses some basic algorithms} :
@@ -330,15 +333,17 @@ the point.
 {\hyperref[savitzky_golay:r1]{{[}R1{]}}}, {\hyperref[savitzky_golay:r2]{{[}R2{]}}}
 \paragraph{Examples}
 
-t = np.linspace(-4, 4, 500)
-y = np.exp( -t**2 ) + np.random.normal(0, 0.05, t.shape)
-ysg = savitzky\_golay(y, window\_size=31, order=4)
-import matplotlib.pyplot as plt
-plt.plot(t, y, label='Noisy signal')
-plt.plot(t, np.exp(-t**2), `k', lw=1.5, label='Original signal')
-plt.plot(t, ysg, `r', label='Filtered signal')
-plt.legend()
-plt.show()
+\begin{Verbatim}[commandchars=\\\{\}]
+\PYG{n}{t} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{linspace}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{4}\PYG{p}{,} \PYG{l+m+mi}{500}\PYG{p}{)}
+\PYG{n}{y} \PYG{o}{=} \PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(} \PYG{o}{\PYGZhy{}}\PYG{n}{t}\PYG{o}{*}\PYG{o}{*}\PYG{l+m+mi}{2} \PYG{p}{)} \PYG{o}{+} \PYG{n}{np}\PYG{o}{.}\PYG{n}{random}\PYG{o}{.}\PYG{n}{normal}\PYG{p}{(}\PYG{l+m+mi}{0}\PYG{p}{,} \PYG{l+m+mf}{0.05}\PYG{p}{,} \PYG{n}{t}\PYG{o}{.}\PYG{n}{shape}\PYG{p}{)}
+\PYG{n}{ysg} \PYG{o}{=} \PYG{n}{savitzky\PYGZus{}golay}\PYG{p}{(}\PYG{n}{y}\PYG{p}{,} \PYG{n}{window\PYGZus{}size}\PYG{o}{=}\PYG{l+m+mi}{31}\PYG{p}{,} \PYG{n}{order}\PYG{o}{=}\PYG{l+m+mi}{4}\PYG{p}{)}
+\PYG{k+kn}{import} \PYG{n+nn}{matplotlib.pyplot} \PYG{k+kn}{as} \PYG{n+nn}{plt}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{t}\PYG{p}{,} \PYG{n}{y}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZsq{}}\PYG{l+s}{Noisy signal}\PYG{l+s}{\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{t}\PYG{p}{,} \PYG{n}{np}\PYG{o}{.}\PYG{n}{exp}\PYG{p}{(}\PYG{o}{\PYGZhy{}}\PYG{n}{t}\PYG{o}{*}\PYG{o}{*}\PYG{l+m+mi}{2}\PYG{p}{)}\PYG{p}{,} \PYG{l+s}{\PYGZsq{}}\PYG{l+s}{k}\PYG{l+s}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{lw}\PYG{o}{=}\PYG{l+m+mf}{1.5}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZsq{}}\PYG{l+s}{Original signal}\PYG{l+s}{\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{plot}\PYG{p}{(}\PYG{n}{t}\PYG{p}{,} \PYG{n}{ysg}\PYG{p}{,} \PYG{l+s}{\PYGZsq{}}\PYG{l+s}{r}\PYG{l+s}{\PYGZsq{}}\PYG{p}{,} \PYG{n}{label}\PYG{o}{=}\PYG{l+s}{\PYGZsq{}}\PYG{l+s}{Filtered signal}\PYG{l+s}{\PYGZsq{}}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{legend}\PYG{p}{(}\PYG{p}{)}
+\PYG{n}{plt}\PYG{o}{.}\PYG{n}{show}\PYG{p}{(}\PYG{p}{)}
+\end{Verbatim}
 
 \end{fulllineitems}
 
@@ -347,6 +352,14 @@ plt.show()
 \chapter{Driver function}
 \label{driver_function:driver-function}\label{driver_function::doc}
 Example of how to use the Spectra
+
+
+\section{Import a file}
+\label{driver_function:import-a-file}
+
+\section{Find Peaks}
+\label{driver_function:find-peaks}
+Me
 
 
 \chapter{Indices and tables}

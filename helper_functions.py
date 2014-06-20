@@ -1,7 +1,8 @@
-"""
-@author: http://wiki.scipy.org/Cookbook/SavitzkyGolay
-"""
 
+
+
+# From http://wiki.scipy.org/Cookbook/SavitzkyGolay
+# Using here till part of local scipy version 
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     r"""Smooth (and optionally differentiate) data with a Savitzky-Golay filter.
     The Savitzky-Golay filter removes high frequency noise from data.
