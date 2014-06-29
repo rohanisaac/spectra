@@ -4,8 +4,7 @@ Driving the functionalized version of spectra
 from __future__ import division
 
 import matplotlib.pyplot as plt
-from definitions import *
-from helper_functions import *
+import definitions as df
 
 #from scipy import signal, interpolate, fftpack
 #import numpy as np
@@ -19,12 +18,17 @@ from peak_o_mat.spec import Spec
 # from peak_o_mat.fit import Fit
 # from peak_o_mat.model import Model
 
-S = Spec(PATH+'samples/PMDA-KBr-1-75x1.CSV') 
+# use peak-o-mat to import model
+spec_obj = Spec(PATH+'samples/PMDA-KBr-1-75x1.CSV') 
 
-# Plot data and bg    
+# use local variables for data
+x = spec_obj.x
+y = spec_obj.y
+
+# Plot data and bg 
 plt.figure(1)
-plt.plot(S.x,S.y,'-')
+plt.plot(x,y,'-')
 
-bg = find_background(S.x,S.y)
-plt.plot(S.x,bg,'-r')
+bg = df.find_background(x,y)
+plt.plot(x,bg,'-r')
     
