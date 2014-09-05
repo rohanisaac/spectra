@@ -47,6 +47,9 @@ class Spectra:
     
     """
     def __init__(self, filename):
+        """
+        Does this work?
+        """
         # import data into spec object
         print "Loading file ... " 
         self.origin = Spec(PATH + filename)
