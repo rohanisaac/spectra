@@ -81,7 +81,7 @@ class Spectra:
             sub_range = (self.data_points/5)
             
         # smooth y-data, maybe add poly order as a parameter
-        # smooth_y = savitzky_golay(self.active,smoothing,3)
+        smooth_y = savitzky_golay(self.active,smoothing,3)
         # smooth_y = self.filter_high_freq(self.active)
     
         # find # of sub-ranges/intervals

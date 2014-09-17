@@ -4,7 +4,7 @@ Driving the functionalized version of spectra
 from __future__ import division
 
 import matplotlib.pyplot as plt
-import definitions as df
+import spectra.definitions as df
 
 #from scipy import signal, interpolate, fftpack
 #import numpy as np
