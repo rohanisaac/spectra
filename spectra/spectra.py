@@ -46,14 +46,45 @@ class Spectra:
     5. Model and Model string (`m` and `model_str`)
     
     """
-    def __init__(self, filename):
+    def __init__(self, *args):
         """
-        Does this work?
+        Create an object of spectra passing a path to the file to be imported.
+        Accepts most text based data
+        
+        Usage
+        -----
+        
+        S = spectra.Specta("/this/is/the/path.txt")
+        
+        Member fuctions
+        ---------------
+        find_background()
+        subtract_background()
+        remove_spikes()
+        guess_peak_width(max_width=50)
+        find_peaks(limit=30)
+        build_model() 
+        fit_data()
+        output_results()
+        
+        Plotting
+        --------
+        
+        plt.plot(S.x,S.active,'-')
+        plt.plot(S.x,S.bg,'-r')
+        plt.plot(S.x,S.model_data,'r-')    
+        plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
+        plt.plot(S.x,S.model_data,'r-')
+        
         """
         # import data into spec object
         print "Loading file ... " 
-        self.origin = Spec(PATH + filename)
-        
+        if len(args) == 1:
+            filename = args
+            self.origin = Spec(PATH + filename)
+        elif len(args) == 2:
+            x, y = args
+            self.origin = Spec(x,y,'data')
         
         self.x = self.origin.x  # for ease of use
         self.data_points = len(self.origin.y) 
