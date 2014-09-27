@@ -59,34 +59,36 @@ m
 Detailed Usage
 --------------
 
-	import matplotlib.pyplot as plt
-	from spectra import Spectra
-	
-	S = Spectra('samples/SAMPLE.CSV')
-	S.find_background()
+```python
+import matplotlib.pyplot as plt
+from spectra import Spectra
 
-	# Plot data and bg
-	plt.figure(1)
-	plt.plot(S.x,S.active,'-')
-	plt.plot(S.x,S.bg,'-r')
-	
-	S.subtract_background()
-	S.remove_spikes()
-	S.guess_peak_width(max_width=50)
-	S.find_peaks(limit=30)
-	S.build_model()
-	
-	# plot spectra, model, found_peaks
-	plt.figure(2)
-	plt.plot(S.x,S.active,'-')
-	plt.plot(S.x,S.model_data,'r-')
-	plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
-	S.fit_data()
-	
-	# plot spectra,fit
-	plt.figure(3)
-	plt.plot(S.x,S.active,'g-',alpha=0.3)
-	plt.plot(S.x,S.model_data,'r-')
-	
-	S.output_results()
+S = Spectra('samples/SAMPLE.CSV')
+S.find_background()
+
+# Plot data and bg
+plt.figure(1)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.bg,'-r')
+
+S.subtract_background()
+S.remove_spikes()
+S.guess_peak_width(max_width=50)
+S.find_peaks(limit=30)
+S.build_model()
+
+# plot spectra, model, found_peaks
+plt.figure(2)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.model_data,'r-')
+plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
+S.fit_data()
+
+# plot spectra,fit
+plt.figure(3)
+plt.plot(S.x,S.active,'g-',alpha=0.3)
+plt.plot(S.x,S.model_data,'r-')
+
+S.output_results()
+```
 
