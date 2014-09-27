@@ -3,6 +3,10 @@ spectra
 
 Basic spectral analysis using peak-o-mat (http://lorentz.sourceforge.net/). Designed for optical spectroscopic data such as UV-Vis, IR, Raman, Photoluminescence, but can be used for a variety of other data types such as X-ray diffraction, NMR, Mass spec data.
 
+Performs some basic data cleanup (background fitting, noise removal). Can conduct basic peak finding using continuous wavelet transformation and generate a list of parameters (peak position, FWHM, amplitude) to send to `peak-o-mat` as initial model parameters. Fit results including uncertainties are retrieved from `peak-o-mat` and output. 
+
+Can plot various stages of the process including raw data, processed data, background estimate, fit model. 
+
 Prerequisites
 -------------
 
