@@ -383,3 +383,17 @@ class Spectra:
         trans = fftpack.fft(data)
         trans[2:] = np.zeros(len(trans)-2)
         return fftpack.ifft(trans)
+		
+	def linear_calibrate(self, m, b):
+		""" Calibrate the x-data with a linear correction function 
+		of the form (new x values) = m (old x-values) + b, 
+		
+		Parameters
+		----------
+		m : float
+			Slope of linear correction
+		b : float
+			y-intercept
+		"""
+		self.xc = (self.x*m) + b 
+
