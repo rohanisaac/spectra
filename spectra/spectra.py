@@ -27,37 +27,29 @@ from peak_o_mat.spec import Spec
 from peak_o_mat.fit import Fit
 
 class Spectra:
-    """ Stores spectra data in Spec (peak-o-mat) format
-    
-    Contains
-    --------   
-    origin: A spec object to store the original x,y data, 
-        load the file, as well as to use for the fitting routines
-    
-    The following y-data (the x-data remains constant for the other operations)
-    bg: attempt poly background fit
-    
-    1. Original Data
-    2. Active Data
-    3. Background
-    
-    
-    4. Number of peaks found (`num_peaks`)
-    5. Model and Model string (`m` and `model_str`)
-    
+    """ 
+    Main class that stores various stages of data processing for a single data
+    set (two column x,y data) in peak-o-mat formats. For details see the
+    constructor.
     """
     def __init__(self, *args):
         """
-        Create an object of spectra passing a path to the file to be imported.
-        Accepts most text based data
+        Create an object of spectra 
+        
+        1 argument : path
+            - path to two column text data
+        2 arguments : x , y 
+            - numpy arrays or lists of x and y data. should be of equal lenght
         
         Usage
         -----
+        >>> import spectra as sp
+        >>> sp_obj = sp.Specta("/this/is/the/path.txt")
         
-        S = spectra.Specta("/this/is/the/path.txt")
+        Member Functions
+        ----------------
+        For details see docs for individual function
         
-        Member fuctions
-        ---------------
         find_background()
         subtract_background()
         remove_spikes()
@@ -76,27 +68,68 @@ class Spectra:
         plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
         plt.plot(S.x,S.model_data,'r-')
         
+    
+        Data Members
+        ------------
+        
+        base : spec object
+            Store the active x,y data, loads the file, 
+            used for fitting routines
+        oy : original y-data
+        bg : background y-data 
+        md : model y-data
+        fd : fitted model y-data
+        ox : original x-data
+        xc : corrected x-data
+        data_points : int
+            number of data points in 
+        num_peaks : int
+            number of peaks
+        m : model object
+            peak-o-mat model used in fitting
+        model_str : string
+            model string used for building peak-o-mat model
+        
         """
         # import data into spec object
         print "Loading file ... " 
         if len(args) == 1:
             filename = args
-            self.origin = Spec(PATH + filename)
+            self.base = Spec(PATH + filename)
         elif len(args) == 2:
             x, y = args
-            self.origin = Spec(x,y,'data')
+            self.base = Spec(x,y,'data')
         
-        self.x = self.origin.x  # for ease of use
+        # save original data
+        self.ox = self.base.x  
+        self.oy = self.base.y
+        
         self.data_points = len(self.origin.y) 
-        self.active = self.origin.y # working data set
 
         # make a first guess of peak width    
-        self.guess_peak_width()
-        
+        self.guess_peak_width()   
 
-    def find_background(self, sub_range=None, poly_deg=3, smoothing=5):
+    def find_background(self, sub_range=None, window_size=5, order=3,
+        bg_thresh=0.3):
         """ Attempts to find the background of the spectra, 
-        and updates the `bg` array
+        
+        Updates
+        -------
+        bg : array
+            background spectrum
+        
+        Arguments
+        ---------
+        sub_range : int (default: points/5)
+             size of range to split data into for background search
+        window_size : int
+            [Savitzky Golay] the length of the window. Must be an odd integer
+            number.
+        order : int
+            [Savitzky Golay] the order of the polynomial used in the filtering.
+            Must be less then `window_size` - 1.
+        bg_thresh : float (default=0.3 i.e 30%)
+            fraction that background should be below 
         
         Procedure
         ---------
@@ -106,76 +139,78 @@ class Spectra:
         4. Fits n degree polynomial to min values
         5. Updates background data with the polynomial evaluated at x-data
         """
+        x = self.base.x
+        
         print "Finding background ... " 
         
         if sub_range == None:
             sub_range = (self.data_points/5)
             
-        # smooth y-data, maybe add poly order as a parameter
-        smooth_y = savitzky_golay(self.active,smoothing,3)
-        # smooth_y = self.filter_high_freq(self.active)
+        # smooth y-data
+        smooth_y = savitzky_golay(self.base.y,window_size,order)
     
         # find # of sub-ranges/intervals
         intervals = int(math.ceil(self.data_points/sub_range))
         
-        # find min of each subinterval and place it at mid point of 
-        #bg_x = np.zeros(intervals)
-        #bg_y = np.zeros(intervals)
+        # for each subinterval find min and place at mid point
         bg_x = []
         bg_y = []
         for i in range(intervals):
+            # find midpoint
             pos = i*sub_range
             half_range = int(math.floor(sub_range/2))
             
-            # if y-value is below 20% add to list
-            
-            bg_x_test = self.x[pos+half_range-1]
+            # add min and corresponding x to list
+            bg_x_test = x[pos+half_range-1]
             bg_y_test = min(smooth_y[pos:(pos+sub_range)])
             
+            # if y-value is below 30% add to list
             if bg_y_test/self.data_max < .3:
                 bg_x.append(bg_x_test)
                 bg_y.append(bg_y_test)
             
-        #self.slmin = signal.argrelmin(sg.savitzky_golay(y_data,9,5))
-        # also find the 10% of min data points in the data set and poly fit
-            # them
-        # find the space between peaks and fit these
-            
-        #bg_poly = np.polyfit(bg_x,bg_y,poly_deg)    # polynomial coefficeints
-            # of fit
-        #bg = np.poly1d(bg_poly) # evaluate polynomial
-        #self.bg = bg(self.origin.x)
-        bg_x_full = [self.x[0]] + bg_x + [self.x[-1]]
+        # add endpoints of data as well
+        bg_x_full = [x[0]] + bg_x + [x[-1]]
         bg_y_full = [smooth_y[0]] + bg_y + [smooth_y[-1]]
         
-        # smooth this data
-        #bg_y_full = signal.medfilt(bg_y_full, 5)        
-        
+        # interpolate this data set       
         bg_spline = interpolate.interp1d(bg_x_full, bg_y_full, kind='quadratic')
-        
-        self.bg = bg_spline(self.x)
+        self.bg = bg_spline(x)
         
     def subtract_background(self):
         """ Subtract background from active spectra """
         print "Subtracting background ... "
-        self.active = self.active - self.bg
+        self.base.y = self.base.y - self.bg
 
     def find_peaks(self, lower=None, upper=None, threshold=5, limit=20):
-        """ Find peaks in actve data set using continous wavelet 
+        """ Find peaks in active data set using continuous wavelet 
         transformation from `scipy.signal`
-        
-        Variables modified
-        ------------------
-        peak_pos: list of indicies associated with peak positions
-        num_peaks: # of peaks found
         
         Options
         -------
-        lower: lower limit of peak size to search for
-        upper: upper limit for same (in index values)
-        threshold: min % of peak value has to be to count as a peak
-        limit: max limit of peaks to detect (sorted by intensity)        
+        lower: int
+            lower limit of peak size to search for
+        upper: int 
+            upper limit for same (in index values)
+        threshold: float (default=5)
+            min percent of max to count as a peak (eg 5 = only peaks above 5 
+            percent reported)
+        limit: int 
+            max limit of peaks to report (sorted by intensity)
+        
+        Updates
+        -------
+        peak_pos : list
+            indices associated with peak positions
+        num_peaks : int
+            number of peaks found
+            
+        Todo
+        ----
+        remove peaks that are pretty close together?
+              
         """
+        y = self.base.y
         print "Looking for peaks ... "  
         
         if lower == None:
@@ -183,34 +218,33 @@ class Spectra:
         if upper == None:
             upper = self.test_peak_width*5
 
-        peak_pos = signal.find_peaks_cwt(self.active,np.arange(lower,upper),min_snr=2)
+        peak_pos = signal.find_peaks_cwt(y,np.arange(lower,upper),min_snr=2)
         
         print "Found ", len(peak_pos), " peaks."
         
-        
         # remove peaks that are not above the threshold.
-        peak_pos = [i for i in peak_pos if (self.active[i]/self.data_max) > (threshold/100)]  
+        peak_pos = [i for i in peak_pos if (y[i]/self.data_max) > (threshold/100)]  
         
-        # remove peaks that are pretty close together?
-        # only use the top limit peaks
-        # first sort the peak list by size of y
-        # print np.argsort(self.s.y[self.peak_pos])
+        print "After filtering out peaks below ", threshold, \
+            "percent, we have ", len(peak_pos), " peaks."
         
-        print "After filtering out peaks below ", threshold, "percent, we have ", len(peak_pos), " peaks."
+        # only use the most intense peaks, zip two lists together, 
+        # make the y-values as the first item, and sort by it (descending)
+        peak_pos = [y for (x,y) in sorted(zip(y[peak_pos],peak_pos),reverse=True)]
         
-        #only use the top limit peaks, zip two list together, 
-        # make the y-values as the first item, and sort by it (in descending)
-        peak_pos = [y for (x,y) in sorted(zip(self.active[peak_pos],peak_pos),reverse=True)]
         self.peak_pos = peak_pos[0:limit]
         self.num_peaks = len(self.peak_pos)
+        
         print "Using ", self.num_peaks, " peaks at ", self.peak_pos 
 
     def build_model(self, peak_type='LO', max_width=None):
         """ Builds a peak-o-mat model of peaks in listed by index in `peak_pos`
+        Uses some basic algorithms to determine initial parameters for amplitude
+        and fwhm (limit on fwhm to avoid fitting background as peaks).
         
         Parameters
         ----------
-        peak_type : string
+        peak_type : string (default='LO')
             Peaks can be of the following types: 
             (to setup custom peaks and more, see peak-o-mat docs)
             
@@ -220,10 +254,17 @@ class Spectra:
             | 'PVO' : psuedo-voigt profile
             | 'FAN' : fano lineshape        
         
-        
-        Peaks can veof default type lorentzian (LO). Uses some basic algorithms 
-        to determine initial parameters for amplitude and fwhm (limit on fwhm 
-        to avoid fitting background as peaks. """   
+        max_width : int (default = total points/10)
+            max width (in data points) that peak fitted can be
+            
+        Updates
+        -------
+        md : ndarray
+            y-data of model
+        model : model object
+            
+      
+        """   
         
         print "Building model ... "
         
@@ -245,8 +286,8 @@ class Spectra:
         # find initial values for paramters of model (position,height,fwhm) 
         params = [{'const':0.0}] # again background is always zero.
         for i in self.peak_pos:
-            amplitude = self.active[i]
-            position = self.origin.x[i]
+            amplitude = self.base.y[i]
+            position = self.base.x[i]
             
             ## seperate into a seperate function
             # Find fwhm for each peak
@@ -256,13 +297,13 @@ class Spectra:
             
             # look for left and right postions of when data is below half max; 
             # also make sure index does not get out of bounds
-            while (self.active[left]>half_max and left > 0 ):
+            while (self.base.y[left]>half_max and left > 0 ):
                 left = left - 1
-            while (self.active[right] > half_max and right < (self.data_points-1)):
+            while (self.base.y[right] > half_max and right < (self.data_points-1)):
                 right = right + 1
 
             # find distance between these two point
-            fwhm = self.origin.x[right] - self.origin.x[left]
+            fwhm = self.base.x[right] - self.base.x[left]
             
             # make sure doesn't blow up
             if fwhm > max_width:
@@ -273,11 +314,8 @@ class Spectra:
         # set this model 
         test_model.set_parameters(params)
         
-        # Evaluate the model at the same number of data points as original
-        # ??? Should I increase the number of data points ??
-        ## Obviously not, since this is only for plotting.
-        # self.x = np.linspace(min(self.s.x),max(self.s.x),5*self.max_points)
-        self.model_data = test_model.evaluate(self.origin.x)
+        # update class
+        self.md = test_model.evaluate(self.base.x)
         self.model = test_model
         
     def fit_data(self):
@@ -286,14 +324,14 @@ class Spectra:
         
         print "Fitting Data..."
         
-        fit = Fit(Spec(self.x,self.active,"currentdata"), self.model)
+        fit = Fit(Spec(self.base.x,self.base.y,"currentdata"), self.model)
         result = fit.run()
         
         print "Fit result: ", result[-1]        
         
         # update model, and model plot points
         self.model.update_from_fit(result)
-        self.model_data = self.model.evaluate(self.x)
+        self.fd = self.model.evaluate(self.base.x)
         
     def output_results(self):
         """ Output fit paramters as csv values with errors"""
@@ -305,26 +343,39 @@ class Spectra:
             print self.model.parameters_as_csv(selection=i,witherrors=True)
     
     # ---
-    # Helper functions, might make private
+    # Helper functions
     # ---     
     
-    def guess_peak_width(self,max_width = 50):
+    def guess_peak_width(self, max_width = None):
         """ Find an initial guess for the peak with of the data imported, 
         use in peak finding and model buildings and other major functions, 
         probably should call in the constructor
         
         Parameters
         ----------
-        max_width : int
-            Max width of peaks to search for
+        max_width : int (default = total points/5)
+            Max width of peaks to search for in points 
         
         Notes
         -------
         Locates the max value in the data
         Finds the peak width associated with this data
+        
+        Updates
+        -------
+        data_max : float
+            max intensity of y-data
+        data_max_pos : int
+            index of max data
+        test_peak_width :
+            guess for peak width of data
+        
         """
-        self.data_max = max(self.active)
-        self.data_max_pos = np.argmax(self.active)
+        if max_width = None:
+            max_width = self.num_points/5
+        
+        self.data_max = max(self.base.y)
+        self.data_max_pos = np.argmax(self.base.y)
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
         
         print "Peak width of about ", self.test_peak_width
@@ -332,57 +383,72 @@ class Spectra:
         
     def remove_spikes(self,strength = 0.5):
         """ Attempts to remove spikes in active set using a simple test of 
-        the pixels around it. Fractional value of strength needed."""
+        the pixels around it. Fractional value of strength needed.
+        
+        Arguments
+        ---------
+        strength : float (default: 0.5)
+            ratio of data point over average of surrounding points must be to
+            count as a spike 
+        """
         print "Removing spikes..."
 
         mean = lambda x,y: (x+y)/2
         
-        y = self.active
+        y = self.base.y
         data_max = max(y)
         for i in range(1,len(y)-1):
             if (np.abs( y[i] -  mean(y[i-1],y[i+1]) )/ data_max ) > strength:
                 y[i] = mean(y[i-1],y[i+1])
         
-        self.active = y
+        self.base.y = y
         
     def find_fwhm(self,position):
-        """ Find the fwhm of a point using a very simplisitic algorigthm. 
-        Could return very large width. """
+        """ Find the fwhm of a point using a very simplistic algorithm. 
+        Could return very large width. 
+        
+        Arguments
+        ---------
+        position : int
+            index of peak of which we are trying to determine fwhm
+            
+        Returns
+        -------
+        fwhm : float
+            fwhm of peak in units of x-data
+        
+        """
         left = position
         right = position
-        half_max = self.active[position]/2
+        half_max = self.base.y[position]/2
         
         # change max_width to function of data set
         
         # make sure index does not get out of bounds
-        while (self.active[left] > half_max and left > 0 ):
+        while (self.base.y[left] > half_max and left > 0 ):
             left = left-1
-        while (self.active[right] > half_max and right < (self.data_points-1)):
+        while (self.base.y[right] > half_max and right < (self.data_points-1)):
             right = right + 1
             
         # left = find index to left when height is below half_max
         # right same as above
         # find distance between these two point
-        fwhm = self.x[right] - self.x[left]
+        fwhm = self.base.x[right] - self.base.x[left]
             
         return fwhm
         
-    def filter_high_freq(self, data):
-        """ Filter high frequency data using fft 
+    def filter_high_freq(self, cof=5):
+        """ Filter high frequency y-data using 1-D fft 
         
         Parameters
         ----------
-        data : np.array
-            Data to filter
+        cof : int (default=5)
+            Coefficient above which to truncate Fourier series. 
             
-        Returns
-        -------
-        data : np.array
-            Data with high frequcny components removed
         """
-        trans = fftpack.fft(data)
-        trans[2:] = np.zeros(len(trans)-2)
-        return fftpack.ifft(trans)
+        ft = fftpack.fft(self.base.y)
+        ft[cof:] = np.zeros(len(trans)-2)
+        self.base.y fftpack.ifft(ft)
 		
 	def linear_calibrate(self, m, b):
 		""" Calibrate the x-data with a linear correction function 
@@ -394,6 +460,11 @@ class Spectra:
 			Slope of linear correction
 		b : float
 			y-intercept
+            
+        Updates
+        -------
+        xc : 
+            corrected x-data
 		"""
-		self.xc = (self.x*m) + b 
+		self.xc = (self.base.x*m) + b 
 
