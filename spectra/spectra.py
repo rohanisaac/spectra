@@ -92,9 +92,9 @@ class Spectra:
         
         """
         # import data into spec object
-        print "Loading file ... " 
+        print "Loading file ... "
+        
         if len(args) == 1:
-            filename = args
             self.base = Spec(PATH + filename)
         elif len(args) == 2:
             x, y = args
@@ -371,7 +371,7 @@ class Spectra:
             guess for peak width of data
         
         """
-        if max_width = None:
+        if max_width == None:
             max_width = self.num_points/5
         
         self.data_max = max(self.base.y)
@@ -448,7 +448,7 @@ class Spectra:
         """
         ft = fftpack.fft(self.base.y)
         ft[cof:] = np.zeros(len(trans)-2)
-        self.base.y fftpack.ifft(ft)
+        self.base.y = fftpack.ifft(ft)
 		
 	def linear_calibrate(self, m, b):
 		""" Calibrate the x-data with a linear correction function 
