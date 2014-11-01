@@ -177,12 +177,12 @@ class Spectra:
         
         # interpolate this data set       
         bg_spline = interpolate.interp1d(bg_x_full, bg_y_full, kind='quadratic')
-        self.bg = bg_spline(x)
+        self.bg = (x,bg_spline(x),"backgound")
         
     def subtract_background(self):
         """ Subtract background from active spectra """
         print "Subtracting background ... "
-        self.base.y = self.base.y - self.bg
+        self.base = self.base - self.bg
 
     def find_peaks(self, lower=None, upper=None, threshold=5, limit=20):
         """ Find peaks in active data set using continuous wavelet 
