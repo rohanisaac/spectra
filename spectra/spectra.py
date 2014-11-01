@@ -14,14 +14,15 @@ from scipy import signal, interpolate, fftpack
 import numpy as np
 import sys, os, math
 
-PATH = os.getcwd()+'/'
 
+PATH = os.getcwd()+'/'
+print "Base path is: ", PATH
 # better smoothing funciton; should be in np.signal, but import it locally 
 # till it appears
 from helper_functions import *
 
 # peak-o-mat stuff
-sys.path.append(PATH + '../peak-o-mat-1.1.9/')
+sys.path.append(PATH + 'peak-o-mat-1.1.9/')
 from peak_o_mat.model import Model
 from peak_o_mat.spec import Spec
 from peak_o_mat.fit import Fit
@@ -81,7 +82,7 @@ class Spectra:
         fd : fitted model y-data
         ox : original x-data
         xc : corrected x-data
-        data_points : int
+        num_points : int
             number of data points in 
         num_peaks : int
             number of peaks
@@ -93,9 +94,10 @@ class Spectra:
         """
         # import data into spec object
         print "Loading file ... "
-        
+        print args[0]
         if len(args) == 1:
-            self.base = Spec(PATH + filename)
+            file_name = args[0]
+            self.base = Spec(PATH + file_name)
         elif len(args) == 2:
             x, y = args
             self.base = Spec(x,y,'data')
@@ -104,7 +106,7 @@ class Spectra:
         self.ox = self.base.x  
         self.oy = self.base.y
         
-        self.data_points = len(self.origin.y) 
+        self.num_points = len(self.base.y) 
 
         # make a first guess of peak width    
         self.guess_peak_width()   
@@ -144,13 +146,13 @@ class Spectra:
         print "Finding background ... " 
         
         if sub_range == None:
-            sub_range = (self.data_points/5)
+            sub_range = (self.num_points/5)
             
         # smooth y-data
         smooth_y = savitzky_golay(self.base.y,window_size,order)
     
         # find # of sub-ranges/intervals
-        intervals = int(math.ceil(self.data_points/sub_range))
+        intervals = int(math.ceil(self.num_points/sub_range))
         
         # for each subinterval find min and place at mid point
         bg_x = []
@@ -270,7 +272,7 @@ class Spectra:
         
         if max_width==None:
             # peaks should be at most one tenth of the data set
-            max_width = self.data_points/10
+            max_width = self.num_points/10
         
         background = 'CB' # since using a seperate background algorithm, always constant background 
 
@@ -299,7 +301,7 @@ class Spectra:
             # also make sure index does not get out of bounds
             while (self.base.y[left]>half_max and left > 0 ):
                 left = left - 1
-            while (self.base.y[right] > half_max and right < (self.data_points-1)):
+            while (self.base.y[right] > half_max and right < (self.num_points-1)):
                 right = right + 1
 
             # find distance between these two point
@@ -427,7 +429,7 @@ class Spectra:
         # make sure index does not get out of bounds
         while (self.base.y[left] > half_max and left > 0 ):
             left = left-1
-        while (self.base.y[right] > half_max and right < (self.data_points-1)):
+        while (self.base.y[right] > half_max and right < (self.num_points-1)):
             right = right + 1
             
         # left = find index to left when height is below half_max
