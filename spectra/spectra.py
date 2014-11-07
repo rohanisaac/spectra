@@ -85,7 +85,9 @@ class Spectra:
         num_points : int
             number of data points in 
         num_peaks : int
-            number of peaks
+            number of 
+        peak_pos : list
+            x positions of peaks
         m : model object
             peak-o-mat model used in fitting
         model_str : string
@@ -212,6 +214,8 @@ class Spectra:
         remove peaks that are pretty close together?
               
         """
+        # smooth y-data
+        smooth_y = savitzky_golay(self.base.y,window_size=25,order=2)
         y = self.base.y
         print "Looking for peaks ... "  
         
@@ -220,7 +224,7 @@ class Spectra:
         if upper == None:
             upper = self.test_peak_width*5
 
-        peak_pos = signal.find_peaks_cwt(y,np.arange(lower,upper),min_snr=2)
+        peak_pos = signal.find_peaks_cwt(smooth_y,np.arange(lower,upper),min_snr=2)
         
         print "Found ", len(peak_pos), " peaks."
         
@@ -394,6 +398,8 @@ class Spectra:
             count as a spike 
         """
         print "Removing spikes..."
+        
+        ## !!! Try scipy.signal.medfilt
 
         mean = lambda x,y: (x+y)/2
         
