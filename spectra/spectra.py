@@ -92,6 +92,10 @@ class Spectra:
             peak-o-mat model used in fitting
         model_str : string
             model string used for building peak-o-mat model
+        data_max : int
+            max of y-data
+        data_max_pos : int
+            index associated with max data
         
         """
         # import data into spec object
@@ -108,9 +112,10 @@ class Spectra:
         self.ox = self.base.x  
         self.oy = self.base.y
         
-        self.num_points = len(self.base.y) 
+        self.num_points = len(self.base.y)
 
-        # make a first guess of peak width    
+        # make a first guess of peak width
+        # also updates max, and max position    
         self.guess_peak_width()   
 
     def find_background(self, sub_range=None, window_size=5, order=3,
@@ -215,7 +220,7 @@ class Spectra:
               
         """
         # smooth y-data
-        smooth_y = savitzky_golay(self.base.y,window_size=25,order=2)
+        # smooth_y = savitzky_golay(self.base.y,window_size=25,order=2)
         y = self.base.y
         print "Looking for peaks ... "  
         
@@ -224,9 +229,9 @@ class Spectra:
         if upper == None:
             upper = self.test_peak_width*5
 
-        peak_pos = signal.find_peaks_cwt(smooth_y,np.arange(lower,upper),min_snr=2)
+        peak_pos = signal.find_peaks_cwt(y,np.arange(lower,upper),min_snr=2)
         
-        print "Found ", len(peak_pos), " peaks."
+        print "Found %s peaks at %s" % (len(peak_pos),peak_pos)
         
         # remove peaks that are not above the threshold.
         peak_pos = [i for i in peak_pos if (y[i]/self.data_max) > (threshold/100)]  
