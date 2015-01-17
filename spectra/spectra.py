@@ -40,7 +40,7 @@ class Spectra:
         1 argument : path
             - path to two column text data
         2 arguments : x , y 
-            - numpy arrays or lists of x and y data. should be of equal lenght
+            - numpy arrays or lists of x and y data. should be of equal length
         
         Usage
         -----

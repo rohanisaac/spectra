@@ -8,10 +8,9 @@ Performs some basic data cleanup (background fitting, noise removal). Can conduc
 Can plot various stages of the process including raw data, processed data, background estimate, fit model. 
 
 **Update: changed variable naming system**
-**NOTE: Background search /removeal may not work**
 
-New Instructions 
-================
+**NOTE: Background search/removal may not work**
+
 Prerequisites
 -------------
 
@@ -137,9 +136,8 @@ data_max : int
 data_max_pos : int
     index associated with max data
 
-Old Instrutions
-===============
-
+Untested script
+---------------
 
 ```python
 import matplotlib.pyplot as plt
