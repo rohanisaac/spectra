@@ -63,11 +63,11 @@ class Spectra:
         Plotting
         --------
         
-        plt.plot(S.x,S.active,'-')
-        plt.plot(S.x,S.bg,'-r')
-        plt.plot(S.x,S.model_data,'r-')    
-        plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
-        plt.plot(S.x,S.model_data,'r-')
+        plt.plot(S.base.x,S.base.y,'-') # active data
+        plt.plot(S.base.x,S.bg,'-r') # backround
+        plt.plot(S.base.x,S.md,'r-') # model data
+        plt.plot(S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy') # peak positions
+        plt.plot(S.base.x,S.md,'r-') # fitted y-data
         
     
         Data Members

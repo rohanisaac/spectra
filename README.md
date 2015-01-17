@@ -7,7 +7,8 @@ Performs some basic data cleanup (background fitting, noise removal). Can conduc
 
 Can plot various stages of the process including raw data, processed data, background estimate, fit model. 
 
-**Update: changed a lot of the variable names to make it a easier to use. Follow only the new instructions, old instrutions may or may not work. Also some of the docstrings may not be completely accurate**
+**Update: changed variable naming system**
+**NOTE: Background search /removeal may not work**
 
 New Instructions 
 ================
@@ -40,47 +41,43 @@ import spectra
 	
 Loading data
 	
-	```python
-	S = spectra.Specta("/this/is/the/path.txt")
-	```
+```python
+S = spectra.Specta("/this/is/the/path.txt")
+```
 	
 Plotting
 	
-	```python
-	import matplotlib.pyplot as plt
-	plt.plot(S.ox,S.oy,'r-') # original data
-	plt.plot(S.base.x,S.base.y,'b-') # active data
-	```
+```python
+import matplotlib.pyplot as plt
+plt.plot(S.ox,S.oy,'r-') # original data
+plt.plot(S.base.x,S.base.y,'b-') # active data
+```
 	
 Find peaks
 
-	```python
-	S.find_peaks(lower=7, upper=99, limit=8)
-	plt.plot(S.base.x,S.base.y,'b-',S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy')
-	```
+```python
+S.find_peaks(lower=7, upper=99, limit=8)
+plt.plot(S.base.x,S.base.y,'b-',S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy')
+```
+
+Build model and fit dat
+
+```python
+S.build_model()
+S.fit_data()
+plt.plot(S.base.x,S.base.y,'-',S.base.x,S.fd,'r-') # plot data and fit
+S.output_results() 
+```
 	
 Other functions
 
-	```python
-	S.remove_spikes()
-
-Old Instrutions
-===============
-
-Prerequisites
--------------
-
-**peak-o-mat (http://lorentz.sourceforge.net/):** Set path in spectra/spectra.py
-
-Basic Usage 
------------
-	
-	# load data
-	import spectra
-	s_obj = spectra.Specta("/this/is/the/path.txt")
-
-Class functions
----------------
+```python
+S.remove_spikes()
+```
+        
+Member Functions
+----------------
+For more details see docstring of individual function
 
 - find_background()
 	+ Attempt to find and fit a polynomial function to the data set
@@ -99,60 +96,80 @@ Class functions
 	+ Uses the peak-o-mat module to perform the fitting routine using the model on the data
 - output_results()
 	+ Output the fit results from peak-o-mat object
+        
 
-Class data
-----------
+Plotting
+--------
 
-- origin
-	+ A spec (peak-o-mat) format object to store the original x,y data, load the file, as well as to use for the fitting routines
+```python
+plt.plot(S.base.x,S.base.y,'-') # active data
+plt.plot(S.base.x,S.bg,'-r') # backround
+plt.plot(S.base.x,S.md,'r-') # model data
+plt.plot(S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy') # peak positions
+plt.plot(S.base.x,S.md,'r-') # fitted y-data
+```
+        
+    
+Data Members
+------------
 
-The following y-data (the x-data remains constant for the other operations)
+base : spec object
+    Store the active x,y data, loads the file, 
+    used for fitting routines
+oy : original y-data
+bg : background y-data 
+md : model y-data
+fd : fitted model y-data
+ox : original x-data
+xc : corrected x-data
+num_points : int
+    number of data points in 
+num_peaks : int
+    number of 
+peak_pos : list
+    x positions of peaks
+m : model object
+    peak-o-mat model used in fitting
+model_str : string
+    model string used for building peak-o-mat model
+data_max : int
+    max of y-data
+data_max_pos : int
+    index associated with max data
 
-- bg
-	+ attempt poly background fit
-- o
-	+ Original Data
-- active
-	+ Active Data
-- bg
-	+ Background
-- numpeaks
-	+ Number of peaks found
-- m
-	+ peak-o-mat model with model string `model_str`
+Old Instrutions
+===============
 
 
-Detailed Usage
---------------
+```python
+import matplotlib.pyplot as plt
+from spectra import Spectra
 
-	import matplotlib.pyplot as plt
-	from spectra import Spectra
+S = Spectra('samples/SAMPLE.CSV')
+S.find_background()
 
-	S = Spectra('samples/SAMPLE.CSV')
-	S.find_background()
+# Plot data and bg
+plt.figure(1)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.bg,'-r')
 
-	# Plot data and bg
-	plt.figure(1)
-	plt.plot(S.x,S.active,'-')
-	plt.plot(S.x,S.bg,'-r')
+S.subtract_background()
+S.remove_spikes()
+S.guess_peak_width(max_width=50)
+S.find_peaks(limit=30)
+S.build_model()
 
-	S.subtract_background()
-	S.remove_spikes()
-	S.guess_peak_width(max_width=50)
-	S.find_peaks(limit=30)
-	S.build_model()
+# plot spectra, model, found_peaks
+plt.figure(2)
+plt.plot(S.x,S.active,'-')
+plt.plot(S.x,S.model_data,'r-')
+plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
+S.fit_data()
 
-	# plot spectra, model, found_peaks
-	plt.figure(2)
-	plt.plot(S.x,S.active,'-')
-	plt.plot(S.x,S.model_data,'r-')
-	plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
-	S.fit_data()
+# plot spectra,fit
+plt.figure(3)
+plt.plot(S.x,S.active,'g-',alpha=0.3)
+plt.plot(S.x,S.model_data,'r-')
 
-	# plot spectra,fit
-	plt.figure(3)
-	plt.plot(S.x,S.active,'g-',alpha=0.3)
-	plt.plot(S.x,S.model_data,'r-')
-
-	S.output_results()
-
+S.output_results()
+```
