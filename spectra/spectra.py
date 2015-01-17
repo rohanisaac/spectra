@@ -461,23 +461,5 @@ class Spectra:
         """
         ft = fftpack.fft(self.base.y)
         ft[cof:] = np.zeros(len(trans)-2)
-        self.base.y = fftpack.ifft(ft)
-		
-	def linear_calibrate(self, m, b):
-		""" Calibrate the x-data with a linear correction function 
-		of the form (new x values) = m (old x-values) + b, 
-		
-		Parameters
-		----------
-		m : float
-			Slope of linear correction
-		b : float
-			y-intercept
-            
-        Updates
-        -------
-        xc : 
-            corrected x-data
-		"""
-		self.xc = (self.base.x*m) + b 
+        self.base.y = fftpack.ifft(ft) 
 
