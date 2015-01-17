@@ -413,8 +413,8 @@ class Spectra:
         for i in range(1,len(y)-1):
             if (np.abs( y[i] -  mean(y[i-1],y[i+1]) )/ data_max ) > strength:
                 y[i] = mean(y[i-1],y[i+1])
-        
-        #self.base.y = y
+        return
+        #self.base.y = y # don't need because of python lazy copying ??
         
     def find_fwhm(self,position):
         """ Find the fwhm of a point using a very simplistic algorithm. 

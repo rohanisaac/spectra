@@ -7,6 +7,53 @@ Performs some basic data cleanup (background fitting, noise removal). Can conduc
 
 Can plot various stages of the process including raw data, processed data, background estimate, fit model. 
 
+**Update: changed a lot of the variable names to make it a easier to use. Follow only the new instructions, old instrutions may or may not work. Also some of the docstrings may not be completely accurate**
+
+New Instructions 
+================
+Prerequisites
+-------------
+
+**peak-o-mat (http://lorentz.sourceforge.net/):** To use either
+* Set path in spectra/spectra.py
+* Or place in same directory as spectra module is contained
+
+	# Example directory structure
+	~$ cd analysis
+	analysis$ ls
+	spectra peak-o-mat-1.1.9 
+	
+Running
+-------
+
+Importing module
+	
+	import sys
+	sys.path.append('spectra/') # if not on path
+	import spectra
+	
+Loading data
+
+	S = spectra.Specta("/this/is/the/path.txt")
+	
+Plotting
+	
+	import matplotlib.pyplot as plt
+	plt.plot(S.ox,S.oy,'r-') # original data
+	plt.plot(S.base.x,S.base.y,'b-') # active data
+	
+Find peaks
+
+	S.find_peaks(lower=7, upper=99, limit=8)
+	plt.plot(S.base.x,S.base.y,'b-',S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy')
+	
+Other functions
+
+	S.remove_spikes()
+
+Old Instrutions
+===============
+
 Prerequisites
 -------------
 
