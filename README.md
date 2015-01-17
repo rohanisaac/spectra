@@ -19,7 +19,7 @@ Prerequisites
 - Set path in spectra/spectra.py
 - Or place in same directory as spectra module is contained
 
-	```python
+	```bash
 	# Example directory structure
 	~$ cd analysis
 	analysis$ ls
@@ -31,11 +31,11 @@ Running
 
 Importing module
 	
-	```python
-	import sys
-	sys.path.append('spectra/') # if not on path
-	import spectra
-	```
+```python
+import sys
+sys.path.append('spectra/') # if not on path
+import spectra
+```
 	
 Loading data
 	
