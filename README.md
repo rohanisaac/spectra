@@ -19,12 +19,13 @@ Prerequisites
 - Set path in spectra/spectra.py
 - Or place in same directory as spectra module is contained
 
-	```bash
-	# Example directory structure
-	~$ cd analysis
-	analysis$ ls
-	spectra peak-o-mat-1.1.9 
-	```
+Example directory structure
+	
+```
+Analysis_folder
+├── peak-o-mat-1.1.9
+└── spectra
+```
 	
 Running
 -------
