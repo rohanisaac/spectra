@@ -462,4 +462,12 @@ class Spectra:
         ft = fftpack.fft(self.base.y)
         ft[cof:] = np.zeros(len(trans)-2)
         self.base.y = fftpack.ifft(ft) 
+        
+    def calibrate_x(self, m, b):
+        """ Applies a linear correction to the x-values """
+        # Need to change the active data set
+        # Save the old data etc.
+        
+        pass
+        
 
