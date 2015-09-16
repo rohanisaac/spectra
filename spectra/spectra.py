@@ -1,7 +1,7 @@
 """
 Spectra class
 -------------
-Analyze spectral data using combination of numpy, scipy, peak-o-mat and 
+Analyze spectral data using combination of numpy, scipy, lmfit and 
 some simple algorithms
 @author: Rohan Isaac
 """
@@ -10,28 +10,14 @@ some simple algorithms
 # print in class functions, not in driver
 
 from __future__ import division
-from scipy import signal, interpolate, fftpack
 import numpy as np
-import sys, os, math
-
-
-PATH = os.getcwd()+'/'
-print "Base path is: ", PATH
-# better smoothing funciton; should be in np.signal, but import it locally 
-# till it appears
-from helper_functions import *
-
-# peak-o-mat stuff
-sys.path.append(PATH + 'peak-o-mat-1.1.9/')
-from peak_o_mat.model import Model
-from peak_o_mat.spec import Spec
-from peak_o_mat.fit import Fit
+from scipy import signal
 
 class Spectra:
     """ 
-    Main class that stores various stages of data processing for a single data
-    set (two column x,y data) in peak-o-mat formats. For details see the
-    constructor.
+    Primary spectra class that stores various stages of data processing for a 
+    single data set (two column x,y data) in np.ndarray formats. For details 
+    see the constructor.
     """
     def __init__(self, *args):
         """
@@ -45,7 +31,11 @@ class Spectra:
         Usage
         -----
         >>> import spectra as sp
-        >>> sp_obj = sp.Specta("/this/is/the/path.txt")
+        >>> sp_obj = sp.Spectra("/this/is/the/path.txt")
+        >>> dat = np.genfromtxt('/path/to/file.txt')
+        >>> x_dat = dat[:,0]
+        >>> y_dat = dat[:,1]
+        >>> sp_obj2 = sp.Spectra(x_dat, y_dat)
         
         Member Functions
         ----------------
@@ -54,8 +44,8 @@ class Spectra:
         find_background()
         subtract_background()
         remove_spikes()
-        guess_peak_width(max_width=50)
-        find_peaks(limit=30)
+        guess_peak_width()
+        find_peaks()
         build_model() 
         fit_data()
         output_results()
@@ -63,39 +53,23 @@ class Spectra:
         Plotting
         --------
         
-        plt.plot(S.base.x,S.base.y,'-') # active data
-        plt.plot(S.base.x,S.bg,'-r') # backround
-        plt.plot(S.base.x,S.md,'r-') # model data
-        plt.plot(S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy') # peak positions
-        plt.plot(S.base.x,S.md,'r-') # fitted y-data
+        plt.plot(S.x,S.y,'-') # active data
+        plt.plot(S.x,S.bg,'-r') # backround
+        plt.plot(S.x,S.md,'r-') # model data
+        plt.plot(S.x[S.peak_pos],S.y[S.peak_pos],'oy') 
+        plt.plot(Sx,S.md,'r-') # fitted y-data
         
     
         Data Members
         ------------
         
-        base : spec object
-            Store the active x,y data, loads the file, 
-            used for fitting routines
-        oy : original y-data
-        bg : background y-data 
-        md : model y-data
-        fd : fitted model y-data
         ox : original x-data
-        xc : corrected x-data
-        num_points : int
-            number of data points in 
-        num_peaks : int
-            number of 
-        peak_pos : list
-            x positions of peaks
-        m : model object
-            peak-o-mat model used in fitting
-        model_str : string
-            model string used for building peak-o-mat model
-        data_max : int
-            max of y-data
-        data_max_pos : int
-            index associated with max data
+        oy : original y-data
+        x : active x-data
+        y : active y-data
+        bg : found background
+        num_peaks : number of peaks found
+        peak_list : indices of found peaks
         
         """
         # import data into spec object
@@ -103,23 +77,17 @@ class Spectra:
         print args[0]
         if len(args) == 1:
             file_name = args[0]
-            self.base = Spec(PATH + file_name)
+            self.x ,self.y = getxy(file_name)
         elif len(args) == 2:
-            x, y = args
-            self.base = Spec(x,y,'data')
+            self.x, self.y = args
         
-        # save original data
-        self.ox = self.base.x  
-        self.oy = self.base.y
         
-        self.num_points = len(self.base.y)
-
+        #self.num_points = len(self.base.y)
         # make a first guess of peak width
         # also updates max, and max position    
-        self.guess_peak_width()   
+        #self.guess_peak_width()   
 
-    def find_background(self, sub_range=None, window_size=5, order=3,
-        bg_thresh=0.3):
+    def find_background(self, window_size, order):
         """ Attempts to find the background of the spectra, 
         
         Updates
@@ -129,71 +97,29 @@ class Spectra:
         
         Arguments
         ---------
-        sub_range : int (default: points/5)
-             size of range to split data into for background search
         window_size : int
             [Savitzky Golay] the length of the window. Must be an odd integer
             number.
         order : int
             [Savitzky Golay] the order of the polynomial used in the filtering.
             Must be less then `window_size` - 1.
-        bg_thresh : float (default=0.3 i.e 30%)
-            fraction that background should be below 
-        
-        Procedure
-        ---------
-        1. Smooths y-data with savtzky_golay
-        2. Splits data into subranges
-        3. Finds y-value min of subranges, and assigns to mid x-value
-        4. Fits n degree polynomial to min values
-        5. Updates background data with the polynomial evaluated at x-data
         """
-        x = self.base.x
         
         print "Finding background ... " 
-        
-        if sub_range == None:
-            sub_range = (self.num_points/5)
             
         # smooth y-data
-        smooth_y = savitzky_golay(self.base.y,window_size,order)
-    
-        # find # of sub-ranges/intervals
-        intervals = int(math.ceil(self.num_points/sub_range))
-        
-        # for each subinterval find min and place at mid point
-        bg_x = []
-        bg_y = []
-        for i in range(intervals):
-            # find midpoint
-            pos = i*sub_range
-            half_range = int(math.floor(sub_range/2))
-            
-            # add min and corresponding x to list
-            bg_x_test = x[pos+half_range-1]
-            bg_y_test = min(smooth_y[pos:(pos+sub_range)])
-            
-            # if y-value is below 30% add to list
-            if bg_y_test/self.data_max < .3:
-                bg_x.append(bg_x_test)
-                bg_y.append(bg_y_test)
-            
-        # add endpoints of data as well
-        bg_x_full = [x[0]] + bg_x + [x[-1]]
-        bg_y_full = [smooth_y[0]] + bg_y + [smooth_y[-1]]
-        
-        # interpolate this data set       
-        bg_spline = interpolate.interp1d(bg_x_full, bg_y_full, kind='quadratic')
-        self.bg = bg_spline(x)
+        self.bg = savitzky_golay(self.y,window_size,order)
+        return
         
     def subtract_background(self):
         """ Subtract background from active spectra """
         print "Subtracting background ... "
-        self.base = self.base - Spec(x,bg_spline(x),"background")
+        self.oy = self.y
+        self.y = self.y - self.bg
 
     def find_peaks(self, lower=None, upper=None, threshold=5, limit=20):
         """ Find peaks in active data set using continuous wavelet 
-        transformation from `scipy.signal`
+        transformation
         
         Options
         -------
@@ -213,10 +139,6 @@ class Spectra:
             indices associated with peak positions
         num_peaks : int
             number of peaks found
-            
-        Todo
-        ----
-        remove peaks that are pretty close together?
               
         """
         # smooth y-data
@@ -249,21 +171,17 @@ class Spectra:
         print "Using ", self.num_peaks, " peaks at ", self.peak_pos 
 
     def build_model(self, peak_type='LO', max_width=None):
-        """ Builds a peak-o-mat model of peaks in listed by index in `peak_pos`
+        """ Builds a lmfit model of peaks in listed by index in `peak_pos`
         Uses some basic algorithms to determine initial parameters for amplitude
         and fwhm (limit on fwhm to avoid fitting background as peaks).
         
         Parameters
         ----------
-        peak_type : string (default='LO')
+        peak_type : string (default='lorentizian')
             Peaks can be of the following types: 
-            (to setup custom peaks and more, see peak-o-mat docs)
             
-            | 'LO' : symmetric lorentzian
-            | 'GA' : symmetric gaussain
-            | 'VO' : voigt profile
-            | 'PVO' : psuedo-voigt profile
-            | 'FAN' : fano lineshape        
+            - 'LO' : symmetric lorentzian
+            - 'GA' : symmetric gaussain   
         
         max_width : int (default = total points/10)
             max width (in data points) that peak fitted can be
@@ -328,6 +246,25 @@ class Spectra:
         # update class
         self.md = test_model.evaluate(self.base.x)
         self.model = test_model
+        model = PolynomialModel(2,prefix='bg_')
+        pars = model.make_params()
+        for i,peak in enumerate(peak_guess):
+            temp_model = LorentzianModel(prefix='p%s_' % i)
+            pars.update(temp_model.make_params())
+            model += temp_model
+        #print model
+        #pars = model.make_params()
+        print pars
+        #print re.sub(',','\n',pars.viewvalues())
+        pars['bg_c0'].set(0)
+        pars['bg_c1'].set(0)
+        pars['bg_c2'].set(0)
+        for i,peak in enumerate(xpeak):
+            print x[peak], 
+            pars['p%s_center' % i].set(x[peak], min=x[peak]-5,max=x[peak]+5)
+            pars['p%s_fwhm' % i].set(2,min=0,max=5)
+            pars['p%s_amplitude' % i].set(y[peak]*norm, min=0, max=2*max(y))
+            print y[peak]
         
     def fit_data(self):
         """ Attempt to fit data using peak-o-mat Fit function with the 
@@ -343,15 +280,17 @@ class Spectra:
         # update model, and model plot points
         self.model.update_from_fit(result)
         self.fd = self.model.evaluate(self.base.x)
+        init = model.eval(pars, x=x)
+        print init
+        plt.plot(x,y)
+        plt.plot(x, init, 'k--')
+        out = model.fit(y,pars,x=x)
+        print(out.fit_report())
         
     def output_results(self):
         """ Output fit paramters as csv values with errors"""
         
-        print "Fit results"
-        
-        for i in ["pos","fwhm", "area", "amp"]:
-            print i
-            print self.model.parameters_as_csv(selection=i,witherrors=True)
+        print(out.fit_report())
     
     # ---
     # Helper functions
