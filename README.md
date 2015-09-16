@@ -1,31 +1,24 @@
 spectra
 =======
 
-Basic spectral analysis using peak-o-mat (http://lorentz.sourceforge.net/). Designed for optical spectroscopic data such as UV-Vis, IR, Raman, Photoluminescence, but can be used for a variety of other data types such as X-ray diffraction, NMR, Mass spec data.
+Basic spectral analysis using lmfit. Designed for optical spectroscopic data such as UV-Vis, IR, Raman, Photoluminescence, but can be used for a variety of other data types such as X-ray diffraction, NMR, Mass spec data.
 
-Performs some basic data cleanup (background fitting, noise removal). Can conduct basic peak finding using continuous wavelet transformation and generate a list of parameters (peak position, FWHM, amplitude) to send to `peak-o-mat` as initial model parameters. Fit results including uncertainties are retrieved from `peak-o-mat` and output. 
+Performs some basic data cleanup (background fitting, noise removal). Can conduct basic peak finding using continuous wavelet transformation and generate a list of parameters (peak position, FWHM, amplitude) to send to `lmfit` as initial model parameters. Fit results including uncertainties are retrieved from `lmfit` and output. 
 
 Can plot various stages of the process including raw data, processed data, background estimate, fit model. 
 
-**Update: changed variable naming system**
+**Update: moved from peak-o-mat to lmfit**
 
-**NOTE: Background search/removal may not work**
+**NOTE: Module does not actively run**
 
 Prerequisites
 -------------
 
-**peak-o-mat (http://lorentz.sourceforge.net/):** To use either
+1. numpy : basic data storage
+2. scipy : signal processing
+3. lmfit : fitting routines
+4. matplotlib : for plotting
 
-- Set path in spectra/spectra.py
-- Or place in same directory as spectra module is contained
-
-Example directory structure
-	
-```
-Analysis_folder
-├── peak-o-mat-1.1.9
-└── spectra
-```
 	
 Running
 -------
@@ -49,14 +42,14 @@ Plotting
 ```python
 import matplotlib.pyplot as plt
 plt.plot(S.ox,S.oy,'r-') # original data
-plt.plot(S.base.x,S.base.y,'b-') # active data
+plt.plot(S.x,S.y,'b-') # active data
 ```
 	
 Find peaks
 
 ```python
 S.find_peaks(lower=7, upper=99, limit=8)
-plt.plot(S.base.x,S.base.y,'b-',S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy')
+plt.plot(S.x,S.y,'b-',S.x[S.peak_pos],S.y[S.peak_pos],'oy')
 ```
 
 Build model and fit dat
@@ -64,7 +57,7 @@ Build model and fit dat
 ```python
 S.build_model()
 S.fit_data()
-plt.plot(S.base.x,S.base.y,'-',S.base.x,S.fd,'r-') # plot data and fit
+plt.plot(S.x,S.y,'-',S.x,S.fd,'r-') # plot data and fit
 S.output_results() 
 ```
 	
@@ -79,7 +72,7 @@ Member Functions
 For more details see docstring of individual function
 
 - find_background()
-	+ Attempt to find and fit a polynomial function to the data set
+	+ Attempt to find background data by a filtering data
 	+ Sets `bg` numpy array
 - subtract_background()
 	+ Subtracts `bg` from active data
@@ -101,11 +94,11 @@ Plotting
 --------
 
 ```python
-plt.plot(S.base.x,S.base.y,'-') # active data
-plt.plot(S.base.x,S.bg,'-r') # backround
-plt.plot(S.base.x,S.md,'r-') # model data
-plt.plot(S.base.x[S.peak_pos],S.base.y[S.peak_pos],'oy') # peak positions
-plt.plot(S.base.x,S.md,'r-') # fitted y-data
+plt.plot(S.x,S.y,'-') # active data
+plt.plot(S.x,S.bg,'-r') # backround
+plt.plot(S.x,S.md,'r-') # model data
+plt.plot(S.x[S.peak_pos],S.y[S.peak_pos],'oy') # peak positions
+plt.plot(S.x,S.md,'r-') # fitted y-data
 ```
         
     

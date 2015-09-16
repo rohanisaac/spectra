@@ -288,7 +288,7 @@ class Spectra:
         print(out.fit_report())
         
     def output_results(self):
-        """ Output fit paramters as csv values with errors"""
+        """ Output fit paramters as summary table"""
         
         print(out.fit_report())
     
