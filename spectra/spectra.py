@@ -77,7 +77,7 @@ class Spectra:
         print args[0]
         if len(args) == 1:
             file_name = args[0]
-            self.x ,self.y = getxy(file_name)
+            self.x ,self.y = self.getxy(file_name)
         elif len(args) == 2:
             self.x, self.y = args
         
@@ -86,6 +86,85 @@ class Spectra:
         # make a first guess of peak width
         # also updates max, and max position    
         #self.guess_peak_width()   
+
+    def getxy(file_name, headers = False):
+        """Extracts x and y data numpy arrays from passed filename. 
+    
+        Arguments
+        ---------
+        file_name: string
+            full/relative path to file to extract data from
+        
+        Returns
+        -------
+        if headers == True:
+            x,y,xlab,ylab (np.array, np.array, str, str)
+    
+        else:
+            x,y
+        where:
+            x,y: 1-d numpy arrays containing first and second column of data present in file
+            xlab, ylab: header information about columns
+        """
+    
+        line_pos = 0 # active line number
+        start_pos = 0
+        end_pos = 0
+        dat_read = False # has data been read
+        header = ''
+    
+        with open(file_name, 'rb') as fil:
+            # find header and footer positions
+            for lin in fil:
+                line_pos += 1
+                # if line contains any of the alphabet (except e for exponents, not data)
+                if re.search('[a-df-zA-DF-Z]', lin):
+                    if not dat_read: 
+                        # before data has been read, set start of data pos
+                        start_pos = line_pos
+                        header = lin
+                    if dat_read and end_pos==0: 
+                        # after data had been read and before end position has been set, set end pos
+                        end_pos = line_pos
+            
+                # if data line and data has not been read
+                elif not dat_read:
+                    # find seperator
+                    if re.search('\t', lin):
+                        sep_char = '\t'
+                    elif re.search(',', lin):
+                        sep_char = ','
+                    else:
+                        print "Unknown separator character"
+                    # now we know what separator is for the data
+                    dat_read = True
+                
+                # data line and we already know what the separator character is
+                else:
+                    continue
+        
+        # if we didn't find an end position
+        if end_pos == 0:
+            skip_foot = 0
+        else:
+        # if we did compute it
+            skip_foot = line_pos - end_pos
+        
+        xlab,ylab = ('','')
+        # find header row if exists
+        header_lst = header.split(sep_char)
+        #print headerlst
+        if len(header_lst) >= 2:
+            xlab, ylab = header_lst[0:2]
+        
+        # attempt to load into numpy array, see what happens
+        fdat = np.genfromtxt(file_name, delimiter=sep_char, skip_header=start_pos, skip_footer = skip_foot )
+    
+        if headers == True:
+            return fdat[:,0],fdat[:,1],xlab,ylab
+        else:
+            return fdat[:,0],fdat[:,1]
+
 
     def find_background(self, window_size, order):
         """ Attempts to find the background of the spectra, 
