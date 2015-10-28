@@ -3,7 +3,8 @@ Spectra class
 -------------
 Analyze spectral data using combination of numpy, scipy, lmfit and 
 some simple algorithms
-@author: Rohan Isaac
+
+author: Rohan Isaac
 """
 
 # keep only one spec object, lots of y-data
@@ -11,6 +12,7 @@ some simple algorithms
 
 from __future__ import division
 import numpy as np
+import re
 from scipy import signal
 
 class Spectra:
@@ -87,7 +89,7 @@ class Spectra:
         # also updates max, and max position    
         #self.guess_peak_width()   
 
-    def getxy(file_name, headers = False):
+    def getxy(self, file_name, headers = False):
         """Extracts x and y data numpy arrays from passed filename. 
     
         Arguments
@@ -106,7 +108,6 @@ class Spectra:
             x,y: 1-d numpy arrays containing first and second column of data present in file
             xlab, ylab: header information about columns
         """
-    
         line_pos = 0 # active line number
         start_pos = 0
         end_pos = 0
