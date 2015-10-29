@@ -14,6 +14,7 @@ from __future__ import division
 import numpy as np
 import re
 from scipy import signal
+from lmfit.models import LorentzianModel,PolynomialModel
 
 class Spectra:
     """ 
@@ -84,10 +85,10 @@ class Spectra:
             self.x, self.y = args
         
         
-        #self.num_points = len(self.base.y)
+        self.num_points = len(self.y)
         # make a first guess of peak width
         # also updates max, and max position    
-        #self.guess_peak_width()   
+        self.guess_peak_width()   
 
     def getxy(self, file_name, headers = False):
         """Extracts x and y data numpy arrays from passed filename. 
@@ -221,9 +222,9 @@ class Spectra:
             number of peaks found
               
         """
-        # smooth y-data
-        # smooth_y = savitzky_golay(self.base.y,window_size=25,order=2)
-        y = self.base.y
+        #smooth y-data
+        y = signal.savgol_filter(self.y,window_length=25,polyorder=2)
+        #y = self.y
         print "Looking for peaks ... "  
         
         if lower == None:
@@ -273,99 +274,52 @@ class Spectra:
         model : model object
             
       
-        """   
-        
+        """
+        norm = 0.398942280401
+        x = self.x
+        y = self.y
+        peak_guess = self.x[self.peak_pos]
         print "Building model ... "
         
-        if max_width==None:
-            # peaks should be at most one tenth of the data set
-            max_width = self.num_points/10
-        
-        background = 'CB' # since using a seperate background algorithm, always constant background 
-
-        # start building model string        
-        model_str = background
-        for i in range(self.num_peaks):
-            # build model string of peaks
-            model_str = model_str + ' ' + peak_type + str(i+1) # number peaks from 1 not 0
-        
-        print "Model string is ", model_str
-        test_model = Model(model_str)
-        
-        # find initial values for paramters of model (position,height,fwhm) 
-        params = [{'const':0.0}] # again background is always zero.
-        for i in self.peak_pos:
-            amplitude = self.base.y[i]
-            position = self.base.x[i]
-            
-            ## seperate into a seperate function
-            # Find fwhm for each peak
-            half_max = amplitude/2
-            left = i
-            right = i
-            
-            # look for left and right postions of when data is below half max; 
-            # also make sure index does not get out of bounds
-            while (self.base.y[left]>half_max and left > 0 ):
-                left = left - 1
-            while (self.base.y[right] > half_max and right < (self.num_points-1)):
-                right = right + 1
-
-            # find distance between these two point
-            fwhm = self.base.x[right] - self.base.x[left]
-            
-            # make sure doesn't blow up
-            if fwhm > max_width:
-                fwhm = max_width
-            
-            params.append({'amp': amplitude, 'fwhm': fwhm, 'pos': position })
-        
-        # set this model 
-        test_model.set_parameters(params)
-        
-        # update class
-        self.md = test_model.evaluate(self.base.x)
-        self.model = test_model
-        model = PolynomialModel(2,prefix='bg_')
+        # start with polynomial background
+        model = PolynomialModel(2, prefix='bg_')
         pars = model.make_params()
-        for i,peak in enumerate(peak_guess):
-            temp_model = LorentzianModel(prefix='p%s_' % i)
-            pars.update(temp_model.make_params())
-            model += temp_model
+        
+        # add lorentizian peak for all peaks
+        for i, peak in enumerate(peak_guess):
+	    temp_model = LorentzianModel(prefix='p%s_' % i)
+	    pars.update(temp_model.make_params())
+	    model += temp_model
+        
+        
         #print model
         #pars = model.make_params()
         print pars
         #print re.sub(',','\n',pars.viewvalues())
+        
+        # set inital background as flat line at zeros
         pars['bg_c0'].set(0)
         pars['bg_c1'].set(0)
         pars['bg_c2'].set(0)
-        for i,peak in enumerate(xpeak):
+        
+        # give values for other peaks 
+        for i,peak in enumerate(self.peak_pos):
             print x[peak], 
             pars['p%s_center' % i].set(x[peak], min=x[peak]-5,max=x[peak]+5)
             pars['p%s_fwhm' % i].set(2,min=0,max=5)
             pars['p%s_amplitude' % i].set(y[peak]*norm, min=0, max=2*max(y))
             print y[peak]
+            
+        self.pars = pars
+        self.model = model
         
     def fit_data(self):
-        """ Attempt to fit data using peak-o-mat Fit function with the 
+        """ Attempt to fit data using lmfit fit function with the 
         generated model. Updates model with fit parameters. """
         
         print "Fitting Data..."
-        
-        fit = Fit(Spec(self.base.x,self.base.y,"currentdata"), self.model)
-        result = fit.run()
-        
-        print "Fit result: ", result[-1]        
-        
-        # update model, and model plot points
-        self.model.update_from_fit(result)
-        self.fd = self.model.evaluate(self.base.x)
-        init = model.eval(pars, x=x)
-        print init
-        plt.plot(x,y)
-        plt.plot(x, init, 'k--')
-        out = model.fit(y,pars,x=x)
-        print(out.fit_report())
+        out = self.model.fit(self.y,self.pars,x=self.x)
+        self.out = out
         
     def output_results(self):
         """ Output fit paramters as summary table"""
@@ -404,8 +358,8 @@ class Spectra:
         if max_width == None:
             max_width = self.num_points/5
         
-        self.data_max = max(self.base.y)
-        self.data_max_pos = np.argmax(self.base.y)
+        self.data_max = max(self.y)
+        self.data_max_pos = np.argmax(self.y)
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
         
         print "Peak width of about ", self.test_peak_width
@@ -452,20 +406,20 @@ class Spectra:
         """
         left = position
         right = position
-        half_max = self.base.y[position]/2
+        half_max = self.y[position]/2
         
         # change max_width to function of data set
         
         # make sure index does not get out of bounds
-        while (self.base.y[left] > half_max and left > 0 ):
+        while (self.y[left] > half_max and left > 0 ):
             left = left-1
-        while (self.base.y[right] > half_max and right < (self.num_points-1)):
+        while (self.y[right] > half_max and right < (self.num_points-1)):
             right = right + 1
             
         # left = find index to left when height is below half_max
         # right same as above
         # find distance between these two point
-        fwhm = self.base.x[right] - self.base.x[left]
+        fwhm = self.x[right] - self.x[left]
             
         return fwhm
         
