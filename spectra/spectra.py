@@ -14,7 +14,7 @@ from __future__ import division
 import numpy as np
 import re
 from scipy import signal
-from lmfit.models import LorentzianModel,PolynomialModel
+from lmfit.models import LorentzianModel, PolynomialModel
 
 
 class Spectra:
@@ -81,17 +81,16 @@ class Spectra:
         print args[0]
         if len(args) == 1:
             file_name = args[0]
-            self.x ,self.y = self.getxy(file_name)
+            self.x, self.y = self.getxy(file_name)
         elif len(args) == 2:
             self.x, self.y = args
-
 
         self.num_points = len(self.y)
         # make a first guess of peak width
         # also updates max, and max position
         self.guess_peak_width()
 
-    def getxy(self, file_name, headers = False):
+    def getxy(self, file_name, headers=False):
         """Extracts x and y data numpy arrays from passed filename.
 
         Arguments
@@ -107,27 +106,30 @@ class Spectra:
         else:
             x,y
         where:
-            x,y: 1-d numpy arrays containing first and second column of data present in file
+            x,y: 1-d numpy arrays containing first and second column of data
+            present in file
             xlab, ylab: header information about columns
         """
-        line_pos = 0 # active line number
+        line_pos = 0  # active line number
         start_pos = 0
         end_pos = 0
-        dat_read = False # has data been read
+        dat_read = False  # has data been read
         header = ''
 
         with open(file_name, 'rb') as fil:
             # find header and footer positions
             for lin in fil:
                 line_pos += 1
-                # if line contains any of the alphabet (except e for exponents, not data)
+                # if line contains any of the alphabet (except e for exponents,
+                # not data)
                 if re.search('[a-df-zA-DF-Z]', lin):
                     if not dat_read:
                         # before data has been read, set start of data pos
                         start_pos = line_pos
                         header = lin
-                    if dat_read and end_pos==0:
-                        # after data had been read and before end position has been set, set end pos
+                    if dat_read and end_pos == 0:
+                        # after data had been read and before end position has
+                        # been set, set end pos
                         end_pos = line_pos
 
                 # if data line and data has not been read
@@ -150,24 +152,25 @@ class Spectra:
         if end_pos == 0:
             skip_foot = 0
         else:
-        # if we did compute it
+            # if we did compute it
             skip_foot = line_pos - end_pos
 
-        xlab,ylab = ('','')
+        xlab, ylab = ('', '')
         # find header row if exists
         header_lst = header.split(sep_char)
-        #print headerlst
+        # print headerlst
         if len(header_lst) >= 2:
             xlab, ylab = header_lst[0:2]
 
         # attempt to load into numpy array, see what happens
-        fdat = np.genfromtxt(file_name, delimiter=sep_char, skip_header=start_pos, skip_footer = skip_foot )
+        fdat = np.genfromtxt(
+            file_name, delimiter=sep_char, skip_header=start_pos,
+            skip_footer=skip_foot)
 
-        if headers == True:
-            return fdat[:,0],fdat[:,1],xlab,ylab
+        if headers:
+            return fdat[:, 0], fdat[:, 1], xlab, ylab
         else:
-            return fdat[:,0],fdat[:,1]
-
+            return fdat[:, 0], fdat[:, 1]
 
     def find_background(self, window_size, order):
         """ Attempts to find the background of the spectra,
@@ -190,7 +193,7 @@ class Spectra:
         print "Finding background ... "
 
         # smooth y-data
-        self.bg = savitzky_golay(self.y,window_size,order)
+        self.bg = signal.savitzky_golay(self.y, window_size, order)
         return
 
     def subtract_background(self):
@@ -223,29 +226,31 @@ class Spectra:
             number of peaks found
 
         """
-        #smooth y-data
-        y = signal.savgol_filter(self.y,window_length=25,polyorder=2)
-        #y = self.y
+        # smooth y-data
+        y = signal.savgol_filter(self.y, window_length=25, polyorder=2)
+        # y = self.y
         print "Looking for peaks ... "
 
-        if lower == None:
+        if lower is None:
             lower = self.test_peak_width*1
-        if upper == None:
+        if upper is None:
             upper = self.test_peak_width*5
 
-        peak_pos = signal.find_peaks_cwt(y,np.arange(lower,upper),min_snr=2)
+        peak_pos = signal.find_peaks_cwt(y, np.arange(lower, upper), min_snr=2)
 
-        print "Found %s peaks at %s" % (len(peak_pos),peak_pos)
+        print "Found %s peaks at %s" % (len(peak_pos), peak_pos)
 
         # remove peaks that are not above the threshold.
-        peak_pos = [i for i in peak_pos if (y[i]/self.data_max) > (threshold/100)]
+        peak_pos = [i for i in peak_pos if
+                    (y[i]/self.data_max) > (threshold/100)]
 
         print "After filtering out peaks below ", threshold, \
             "percent, we have ", len(peak_pos), " peaks."
 
         # only use the most intense peaks, zip two lists together,
         # make the y-values as the first item, and sort by it (descending)
-        peak_pos = [y for (x,y) in sorted(zip(y[peak_pos],peak_pos),reverse=True)]
+        peak_pos = [y1 for (x1, y1) in sorted(zip(y[peak_pos], peak_pos),
+                    reverse=True)]
 
         self.peak_pos = peak_pos[0:limit]
         self.num_peaks = len(self.peak_pos)
@@ -254,8 +259,8 @@ class Spectra:
 
     def build_model(self, peak_type='LO', max_width=None):
         """ Builds a lmfit model of peaks in listed by index in `peak_pos`
-        Uses some basic algorithms to determine initial parameters for amplitude
-        and fwhm (limit on fwhm to avoid fitting background as peaks).
+        Uses some basic algorithms to determine initial parameters for
+        amplitude and fwhm (limit on fwhm to avoid fitting background as peaks)
 
         Parameters
         ----------
@@ -288,15 +293,14 @@ class Spectra:
 
         # add lorentizian peak for all peaks
         for i, peak in enumerate(peak_guess):
-	    temp_model = LorentzianModel(prefix='p%s_' % i)
-	    pars.update(temp_model.make_params())
-	    model += temp_model
+            temp_model = LorentzianModel(prefix='p%s_' % i)
+            pars.update(temp_model.make_params())
+            model += temp_model
 
-
-        #print model
-        #pars = model.make_params()
+        # print model
+        # pars = model.make_params()
         print pars
-        #print re.sub(',','\n',pars.viewvalues())
+        # print re.sub(',','\n',pars.viewvalues())
 
         # set inital background as flat line at zeros
         pars['bg_c0'].set(0)
@@ -304,10 +308,10 @@ class Spectra:
         pars['bg_c2'].set(0)
 
         # give values for other peaks
-        for i,peak in enumerate(self.peak_pos):
+        for i, peak in enumerate(self.peak_pos):
             print x[peak],
-            pars['p%s_center' % i].set(x[peak], min=x[peak]-5,max=x[peak]+5)
-            pars['p%s_fwhm' % i].set(2,min=0,max=5)
+            pars['p%s_center' % i].set(x[peak], min=x[peak]-5, max=x[peak]+5)
+            pars['p%s_fwhm' % i].set(2, min=0, max=5)
             pars['p%s_amplitude' % i].set(y[peak]*norm, min=0, max=2*max(y))
             print y[peak]
 
@@ -319,19 +323,19 @@ class Spectra:
         generated model. Updates model with fit parameters. """
 
         print "Fitting Data..."
-        out = self.model.fit(self.y,self.pars,x=self.x)
+        out = self.model.fit(self.y, self.pars, x=self.x)
         self.out = out
 
     def output_results(self):
         """ Output fit paramters as summary table"""
 
-        print(out.fit_report())
+        print(self.out.fit_report())
 
     # ---
     # Helper functions
     # ---
 
-    def guess_peak_width(self, max_width = None):
+    def guess_peak_width(self, max_width=None):
         """ Find an initial guess for the peak with of the data imported,
         use in peak finding and model buildings and other major functions,
         probably should call in the constructor
@@ -356,7 +360,7 @@ class Spectra:
             guess for peak width of data
 
         """
-        if max_width == None:
+        if max_width is None:
             max_width = self.num_points/5
 
         self.data_max = max(self.y)
@@ -365,8 +369,7 @@ class Spectra:
 
         print "Peak width of about ", self.test_peak_width
 
-
-    def remove_spikes(self,strength = 0.5):
+    def remove_spikes(self, strength=0.5):
         """ Attempts to remove spikes in active set using a simple test of
         the pixels around it. Fractional value of strength needed.
 
@@ -378,19 +381,18 @@ class Spectra:
         """
         print "Removing spikes..."
 
-        ## !!! Try scipy.signal.medfilt
-
-        mean = lambda x,y: (x+y)/2
+        # !!! Try scipy.signal.medfilt
+        mean = lambda x, y: (x+y)/2
 
         y = self.base.y
         data_max = max(y)
-        for i in range(1,len(y)-1):
-            if (np.abs( y[i] -  mean(y[i-1],y[i+1]) )/ data_max ) > strength:
-                y[i] = mean(y[i-1],y[i+1])
+        for i in range(1, len(y)-1):
+            if (np.abs(y[i] - mean(y[i-1], y[i+1]))/data_max) > strength:
+                y[i] = mean(y[i-1], y[i+1])
         return
-        #self.base.y = y # don't need because of python lazy copying ??
+        # self.base.y = y # don't need because of python lazy copying ??
 
-    def find_fwhm(self,position):
+    def find_fwhm(self, position):
         """ Find the fwhm of a point using a very simplistic algorithm.
         Could return very large width.
 
@@ -412,7 +414,7 @@ class Spectra:
         # change max_width to function of data set
 
         # make sure index does not get out of bounds
-        while (self.y[left] > half_max and left > 0 ):
+        while (self.y[left] > half_max and left > 0):
             left = left-1
         while (self.y[right] > half_max and right < (self.num_points-1)):
             right = right + 1
@@ -433,9 +435,7 @@ class Spectra:
             Coefficient above which to truncate Fourier series.
 
         """
-        ft = fftpack.fft(self.base.y)
-        ft[cof:] = np.zeros(len(trans)-2)
-        self.base.y = fftpack.ifft(ft)
+        pass
 
     def calibrate_x(self, m, b):
         """ Applies a linear correction to the x-values """
