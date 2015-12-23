@@ -2,7 +2,7 @@
 Attempt a functionalized verison of spectral analysis
 """
 from __future__ import division
-from helper_functions import savitzky_golay, percent_diff
+from helper_functions import percent_diff
 from scipy import interpolate, signal
 import numpy as np
 
@@ -29,7 +29,7 @@ def find_background(x_data, y_data, percent=3, poly_deg=3, smoothing=5):
     print "Finding background ... "
 
     # smooth the data
-    y_smooth = savitzky_golay(y_data, smoothing, poly_deg)
+    y_smooth = signal.savitzky_golay(y_data, smoothing, poly_deg)
 
     # start with the first x,y postion
     bg_x = [x_data[0]]
