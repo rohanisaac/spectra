@@ -41,39 +41,13 @@ class Spectra:
         >>> y_dat = dat[:,1]
         >>> sp_obj2 = sp.Spectra(x_dat, y_dat)
 
-        Member Functions
-        ----------------
-        For details see docs for individual function
-
-        find_background()
-        subtract_background()
-        remove_spikes()
-        guess_peak_width()
-        find_peaks()
-        build_model()
-        fit_data()
-        output_results()
-
-        Plotting
-        --------
-
-        plt.plot(S.x,S.y,'-') # active data
-        plt.plot(S.x,S.bg,'-r') # backround
-        plt.plot(S.x,S.md,'r-') # model data
-        plt.plot(S.x[S.peak_pos],S.y[S.peak_pos],'oy')
-        plt.plot(Sx,S.md,'r-') # fitted y-data
-
-
         Data Members
         ------------
-
-        ox : original x-data
-        oy : original y-data
-        x : active x-data
-        y : active y-data
-        bg : found background
-        num_peaks : number of peaks found
-        peak_list : indices of found peaks
+        x : x-data
+        y : y-data
+        out.init_fit : model y-data
+        out.best_fit : fit y-data
+        peak_pos : index of peaks found
 
         """
         # import data into spec object
@@ -172,7 +146,11 @@ class Spectra:
         else:
             return fdat[:, 0], fdat[:, 1]
 
-    def find_background(self, window_size, order):
+    def smooth_data(self, window_size=25, order=2):
+        """ Smooths data using savgol_filter """
+        self.y_smooth = signal.savgol_filter(self.y, window_size, order)
+
+    def find_background(self):
         """ Attempts to find the background of the spectra,
 
         Updates
@@ -182,36 +160,26 @@ class Spectra:
 
         Arguments
         ---------
-        window_size : int
-            [Savitzky Golay] the length of the window. Must be an odd integer
-            number.
-        order : int
-            [Savitzky Golay] the order of the polynomial used in the filtering.
-            Must be less then `window_size` - 1.
         """
 
         print "Finding background ... "
-
-        # smooth y-data
-        self.bg = signal.savitzky_golay(self.y, window_size, order)
-        return
+        pass
 
     def subtract_background(self):
         """ Subtract background from active spectra """
         print "Subtracting background ... "
-        self.oy = self.y
-        self.y = self.y - self.bg
+        pass
 
-    def find_peaks(self, lower=None, upper=None, threshold=5, limit=20):
+    def find_peaks(self, width=None, wr=5, threshold=5, limit=20, smooth=False):
         """ Find peaks in active data set using continuous wavelet
         transformation
 
         Options
         -------
-        lower: int
-            lower limit of peak size to search for
-        upper: int
-            upper limit for same (in index values)
+        width: float
+            estimate of peak size
+        wr: int
+            range of width to use for wavelet transformation
         threshold: float (default=5)
             min percent of max to count as a peak (eg 5 = only peaks above 5
             percent reported)
@@ -226,17 +194,32 @@ class Spectra:
             number of peaks found
 
         """
-        # smooth y-data
-        y = signal.savgol_filter(self.y, window_length=25, polyorder=2)
-        # y = self.y
         print "Looking for peaks ... "
 
-        if lower is None:
-            lower = self.test_peak_width*1
-        if upper is None:
-            upper = self.test_peak_width*5
+        if smooth:
+            try:
+                # see if smoothed data already exists
+                self.y_smooth
+            except:
+                # if it doesn't make it with defaults
+                self.smooth_data()
+            y = self.y_smooth
+        else:
+            y = self.y
 
-        peak_pos = signal.find_peaks_cwt(y, np.arange(lower, upper), min_snr=2)
+        x = self.x
+        xscale = len(x)/(max(x)-min(x))
+
+        if width is None:
+            width = self.test_peak_width
+        else:
+            # if width is given here, use it everywhere else
+            self.test_peak_width = width
+
+        lower = width * xscale * 0.75
+        upper = width * xscale * 1.25
+
+        peak_pos = signal.find_peaks_cwt(y, np.linspace(lower, upper, wr))
 
         print "Found %s peaks at %s" % (len(peak_pos), peak_pos)
 
@@ -257,7 +240,7 @@ class Spectra:
 
         print "Using ", self.num_peaks, " peaks at ", self.peak_pos
 
-    def build_model(self, peak_type='LO', max_width=None):
+    def build_model(self, peak_type='LO', max_width=None, bg_ord=2):
         """ Builds a lmfit model of peaks in listed by index in `peak_pos`
         Uses some basic algorithms to determine initial parameters for
         amplitude and fwhm (limit on fwhm to avoid fitting background as peaks)
@@ -273,22 +256,26 @@ class Spectra:
         max_width : int (default = total points/10)
             max width (in data points) that peak fitted can be
 
+        bg_ord: int
+            order of the background polynomial
+            0: constant, 1: linear, ...
+
         Updates
         -------
-        md : ndarray
-            y-data of model
+        pars : model parameters
         model : model object
 
 
         """
-        norm = 0.398942280401
         x = self.x
         y = self.y
+        pw = self.test_peak_width
         peak_guess = self.x[self.peak_pos]
         print "Building model ... "
 
         # start with polynomial background
-        model = PolynomialModel(2, prefix='bg_')
+        # second order
+        model = PolynomialModel(bg_ord, prefix='bg_')
         pars = model.make_params()
 
         # add lorentizian peak for all peaks
@@ -303,16 +290,15 @@ class Spectra:
         # print re.sub(',','\n',pars.viewvalues())
 
         # set inital background as flat line at zeros
-        pars['bg_c0'].set(0)
-        pars['bg_c1'].set(0)
-        pars['bg_c2'].set(0)
+        for i in range(bg_ord+1):
+            pars['bg_c%i' % i].set(0)
 
         # give values for other peaks
         for i, peak in enumerate(self.peak_pos):
             print x[peak],
-            pars['p%s_center' % i].set(x[peak], min=x[peak]-5, max=x[peak]+5)
-            pars['p%s_fwhm' % i].set(2, min=0, max=5)
-            pars['p%s_amplitude' % i].set(y[peak]*norm, min=0, max=2*max(y))
+            pars['p%s_center' % i].set(x[peak]) #, min=x[peak]-5, max=x[peak]+5)
+            pars['p%s_sigma' % i].set(pw/2, min=pw*0.25, max=pw*2)
+            pars['p%s_amplitude' % i].set(y[peak]*(pw/2)*np.pi) #, min=0, max=2*max(y))
             print y[peak]
 
         self.pars = pars
@@ -382,7 +368,7 @@ class Spectra:
         print "Removing spikes..."
 
         # !!! Try scipy.signal.medfilt
-        mean = lambda x, y: (x+y)/2
+        def mean(x, y): return (x+y)/2
 
         y = self.base.y
         data_max = max(y)
