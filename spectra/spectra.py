@@ -13,6 +13,7 @@ author: Rohan Isaac
 from __future__ import division
 import numpy as np
 import re
+import pandas as pd
 from scipy import signal
 from lmfit.models import LorentzianModel, PolynomialModel
 
@@ -312,11 +313,20 @@ class Spectra:
         out = self.model.fit(self.y, self.pars, x=self.x)
         self.out = out
 
-    def output_results(self):
-        """ Output fit paramters as summary table"""
+    def output_results(self, filename=None):
+        """ Return fit paramters and standard error, modified from lmfit
+        class. Can output same data to file if passed file path"""
 
-        print(self.out.fit_report())
-
+        params = self.out.params
+        dat_out = ''
+        for name in list(params.keys()):
+            par = params[name]
+            dat_out += '%s\t%s\t%s\n' % (name, par.value, par.stderr)
+        # print dat_out
+        if filename:
+            with open(filename, 'w') as f:
+                f.write(dat_out)
+        return dat_out
     # ---
     # Helper functions
     # ---

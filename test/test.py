@@ -11,7 +11,7 @@ s = sp.Spectra(os.path.join(sp_path, 'data', 'PhillipsXRD.txt'))
 s.find_peaks(limit=8)
 s.build_model(bg_ord=2)
 s.fit_data()
-s.output_results()
+print s.output_results()
 
 # f,ax = plt.subplots()
 plt.plot(s.x, s.y, 'b-',  # input data
