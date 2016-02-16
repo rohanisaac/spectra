@@ -239,7 +239,7 @@ class Spectra:
         peak_pos = [y1 for (x1, y1) in sorted(zip(y[peak_pos], peak_pos),
                     reverse=True)]
 
-        self.peak_pos = peak_pos[0:limit]
+        self.peak_pos = sorted(peak_pos[0:limit])
         self.num_peaks = len(self.peak_pos)
 
         print "Using ", self.num_peaks, " peaks at ", self.peak_pos
@@ -298,13 +298,12 @@ class Spectra:
 
         # give values for other peaks
         for i, peak in enumerate(self.peak_pos):
-            print x[peak],
+            print 'Peak %i: pos %s, height %s' % (i, x[peak], y[peak])
             # could set bounds #, min=x[peak]-5, max=x[peak]+5)
             pars['p%s_center' % i].set(x[peak])
             pars['p%s_sigma' % i].set(pw/2, min=pw*0.25, max=pw*2)
             # here as well #, min=0, max=2*max(y))
             pars['p%s_amplitude' % i].set(y[peak]*(pw/2)*np.pi)
-            print y[peak]
 
         self.pars = pars
         self.model = model
@@ -315,6 +314,7 @@ class Spectra:
 
         print "Fitting Data..."
         out = self.model.fit(self.y, self.pars, x=self.x)
+        print out.fit_report(show_correl=False)
         self.out = out
 
     def output_results(self, filename=None, pandas=False):
@@ -386,7 +386,7 @@ class Spectra:
         self.data_max_pos = np.argmax(self.y)
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
-        print "Peak width of about ", self.test_peak_width
+        print "Peak width of about %s (in x-data units)" % self.test_peak_width
 
     def remove_spikes(self, strength=0.5):
         """ Attempts to remove spikes in active set using a simple test of
