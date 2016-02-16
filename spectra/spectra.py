@@ -53,9 +53,9 @@ class Spectra:
         """
         # import data into spec object
         print "Loading file ... "
-        print args[0]
         if len(args) == 1:
             file_name = args[0]
+            print file_name
             self.x, self.y = self.getxy(file_name)
         elif len(args) == 2:
             self.x, self.y = args
@@ -171,7 +171,8 @@ class Spectra:
         print "Subtracting background ... "
         pass
 
-    def find_peaks(self, width=None, wr=5, threshold=5, limit=20, smooth=False):
+    def find_peaks(self, width=None, w_range=5, threshold=5, limit=20,
+                   smooth=False):
         """ Find peaks in active data set using continuous wavelet
         transformation
 
@@ -179,8 +180,10 @@ class Spectra:
         -------
         width: float
             estimate of peak size
-        wr: int
-            range of width to use for wavelet transformation
+        w_range: int (default=5)
+            number of widths to use for wavelet transformation
+            NOTE: more increases computational time (?prob), does not seem to
+            affect estimation siginficantly.
         threshold: float (default=5)
             min percent of max to count as a peak (eg 5 = only peaks above 5
             percent reported)
@@ -220,7 +223,7 @@ class Spectra:
         lower = width * xscale * 0.75
         upper = width * xscale * 1.25
 
-        peak_pos = signal.find_peaks_cwt(y, np.linspace(lower, upper, wr))
+        peak_pos = signal.find_peaks_cwt(y, np.linspace(lower, upper, w_range))
 
         print "Found %s peaks at %s" % (len(peak_pos), peak_pos)
 
@@ -287,7 +290,6 @@ class Spectra:
 
         # print model
         # pars = model.make_params()
-        print pars
         # print re.sub(',','\n',pars.viewvalues())
 
         # set inital background as flat line at zeros
@@ -297,9 +299,11 @@ class Spectra:
         # give values for other peaks
         for i, peak in enumerate(self.peak_pos):
             print x[peak],
-            pars['p%s_center' % i].set(x[peak]) #, min=x[peak]-5, max=x[peak]+5)
+            # could set bounds #, min=x[peak]-5, max=x[peak]+5)
+            pars['p%s_center' % i].set(x[peak])
             pars['p%s_sigma' % i].set(pw/2, min=pw*0.25, max=pw*2)
-            pars['p%s_amplitude' % i].set(y[peak]*(pw/2)*np.pi) #, min=0, max=2*max(y))
+            # here as well #, min=0, max=2*max(y))
+            pars['p%s_amplitude' % i].set(y[peak]*(pw/2)*np.pi)
             print y[peak]
 
         self.pars = pars
@@ -313,9 +317,19 @@ class Spectra:
         out = self.model.fit(self.y, self.pars, x=self.x)
         self.out = out
 
-    def output_results(self, filename=None):
+    def output_results(self, filename=None, pandas=False):
         """ Return fit paramters and standard error, modified from lmfit
-        class. Can output same data to file if passed file path"""
+        class. Can output same data to file if passed file path
+
+        Options
+        -------
+        filename : string (default: None)
+            If filename is given write data to that file as csv
+
+        pandas : bool (default: False)
+            True: Return data as pandas dataframe
+            False: Return data as string (csv)
+        """
 
         params = self.out.params
         dat_out = ''
@@ -326,7 +340,16 @@ class Spectra:
         if filename:
             with open(filename, 'w') as f:
                 f.write(dat_out)
-        return dat_out
+        if pandas:
+            from io import StringIO
+            all_data = pd.read_csv(StringIO(unicode(dat_out)),
+                                   delimiter='\t',
+                                   header=None,
+                                   index_col=0,
+                                   names=['value', 'stderr'])
+            return all_data
+        else:
+            return dat_out
     # ---
     # Helper functions
     # ---
