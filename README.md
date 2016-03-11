@@ -7,10 +7,6 @@ Performs some basic data cleanup (background fitting, noise removal). Can conduc
 
 Can plot various stages of the process including raw data, processed data, background estimate, fit model.
 
-**Update: moved from peak-o-mat to lmfit**
-
-**NOTE: Module does not actively run**
-
 Prerequisites
 -------------
 
@@ -23,49 +19,43 @@ Prerequisites
 Running
 -------
 
-Importing module
-
 ```python
 import sys
 sys.path.append('spectra/') # if not on path
 import spectra
-```
 
-Loading data
-
-```python
+# Loading data
 S = spectra.Specta("/this/is/the/path.txt")
-```
 
-Plotting
-
-```python
+# Plotting
 import matplotlib.pyplot as plt
-plt.plot(S.ox,S.oy,'r-') # original data
-plt.plot(S.x,S.y,'b-') # active data
-```
+plt.plot(S.x,S.y,'r-')
 
-Find peaks
+# Finding background
+S.reset() # reset y-data to original data (not really needed here)
+S.find_background(cutoff=1/4500, order=3)
+plt.plot(S.x,S.y,'r-',S.x,S.bg,'b-')
 
-```python
-S.find_peaks(lower=7, upper=99, limit=8)
+# Subtract background
+S.subtract_background()
+plt.plot(S.x,S.y,'r-')
+
+# Find peaks
+S.find_peaks()
 plt.plot(S.x,S.y,'b-',S.x[S.peak_pos],S.y[S.peak_pos],'oy')
-```
 
-Build model and fit dat
-
-```python
+# Build model and fit dat
 S.build_model()
 S.fit_data()
-plt.plot(S.x,S.y,'-',S.x,S.fd,'r-') # plot data and fit
-S.output_results()
+
+# plot data and fit
+plt.plot(S.x,S.y,'-',S.x,S.out.best_fit,'b-')
+plt.plot(S.x,S.y,'-',S.x,S.fd,'r-')
+
+# output results
+print S.output_results()
 ```
 
-Other functions
-
-```python
-S.remove_spikes()
-```
 
 Member Functions
 ----------------
@@ -129,41 +119,6 @@ data_max : int
 data_max_pos : int
     index associated with max data
 
-Untested script
----------------
-
-```python
-import matplotlib.pyplot as plt
-from spectra import Spectra
-
-S = Spectra('samples/SAMPLE.CSV')
-S.find_background()
-
-# Plot data and bg
-plt.figure(1)
-plt.plot(S.x,S.active,'-')
-plt.plot(S.x,S.bg,'-r')
-
-S.subtract_background()
-S.remove_spikes()
-S.guess_peak_width(max_width=50)
-S.find_peaks(limit=30)
-S.build_model()
-
-# plot spectra, model, found_peaks
-plt.figure(2)
-plt.plot(S.x,S.active,'-')
-plt.plot(S.x,S.model_data,'r-')
-plt.plot(S.x[S.peak_pos],S.active[S.peak_pos],'oy')
-S.fit_data()
-
-# plot spectra,fit
-plt.figure(3)
-plt.plot(S.x,S.active,'g-',alpha=0.3)
-plt.plot(S.x,S.model_data,'r-')
-
-S.output_results()
-```
 
 Todo
 ----
