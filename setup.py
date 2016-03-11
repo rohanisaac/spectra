@@ -8,5 +8,5 @@ setup(name='spectra',
       author_email='rohan_isaac@yahoo.com',
       url='https://github.com/rohanisaac/spectra',
       packages=['spectra'],
-      install_requires=['numpy','lmfit'],
+      install_requires=['numpy', 'lmfit', 'scipy'],
       )

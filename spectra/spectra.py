@@ -34,8 +34,8 @@ class Spectra:
         2 arguments : x , y
             - numpy arrays or lists of x and y data. should be of equal length
 
-        Usage
-        -----
+        Examples
+        --------
         >>> import spectra as sp
         >>> sp_obj = sp.Spectra("/this/is/the/path.txt")
         >>> dat = np.genfromtxt('/path/to/file.txt')
@@ -43,8 +43,8 @@ class Spectra:
         >>> y_dat = dat[:,1]
         >>> sp_obj2 = sp.Spectra(x_dat, y_dat)
 
-        Data Members
-        ------------
+        Attributes
+        ----------
         x : x-data
         y : y-data
         out.init_fit : model y-data
@@ -189,7 +189,7 @@ class Spectra:
         order (int) [default: 2]
             filter order
 
-        Updates
+        Returns
         -------
         bg : array
             background spectrum
@@ -200,6 +200,7 @@ class Spectra:
             cutoff = 2 / len(self.y)
         # use the low pass filter to find the background
         self.bg = self.butter_lp_filter(cutoff, order)
+        return self.bg
 
     def subtract_background(self):
         """ Subtract background from active spectra """
@@ -211,8 +212,8 @@ class Spectra:
         """ Find peaks in active data set using continuous wavelet
         transformation
 
-        Options
-        -------
+        Parameters
+        ----------
         width: float
             estimate of peak size
         w_range: int (default=5)
@@ -225,7 +226,7 @@ class Spectra:
         limit: int
             max limit of peaks to report (sorted by intensity)
 
-        Updates
+        Returns
         -------
         peak_pos : list
             indices associated with peak positions
@@ -278,6 +279,7 @@ class Spectra:
         self.num_peaks = len(self.peak_pos)
 
         print "Using ", self.num_peaks, " peaks at ", self.peak_pos
+        return self.num_peaks, self.peak_pos
 
     def build_model(self, peak_type='LO', max_width=None, bg_ord=2):
         """ Builds a lmfit model of peaks in listed by index in `peak_pos`
@@ -299,7 +301,7 @@ class Spectra:
             order of the background polynomial
             0: constant, 1: linear, ...
 
-        Updates
+        Returns
         -------
         pars : model parameters
         model : model object
@@ -342,21 +344,23 @@ class Spectra:
 
         self.pars = pars
         self.model = model
+        return self.pars, self.model
 
     def fit_data(self):
         """
         Attempt to fit data using lmfit fit function with the
         generated model. Updates model with fit parameters.
 
-        Updates
+        Returns
         -------
-        out
+        fitted object
         """
 
         print "Fitting Data..."
         out = self.model.fit(self.y, self.pars, x=self.x)
         print out.fit_report(show_correl=False)
         self.out = out
+        return self.out
 
     def output_results(self, filename=None, pandas=False):
         """ Return fit paramters and standard error, modified from lmfit
@@ -397,8 +401,11 @@ class Spectra:
 
     def crop(self, xmin, xmax):
         """
-
         Crops data using x values
+
+        Args:
+            xmin: min x value
+            ymax: max y value
         """
         r1 = np.argmin(abs(self.x - xmin))
         r2 = np.argmin(abs(self.x - xmax))
@@ -425,7 +432,7 @@ class Spectra:
         Locates the max value in the data
         Finds the peak width associated with this data
 
-        Updates
+        Returns
         -------
         data_max : float
             max intensity of y-data
@@ -443,6 +450,7 @@ class Spectra:
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
         print "Peak width of about %s (in x-data units)" % self.test_peak_width
+        return self.data_max, self.data_max_pos, self.test_peak_width
 
     def set_peak_width(self, width):
         """
