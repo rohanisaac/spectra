@@ -24,6 +24,7 @@ class Spectra:
     single data set (two column x,y data) in np.ndarray formats. For details
     see the constructor.
     """
+
     def __init__(self, *args):
         """
         Create an object of spectra
@@ -64,6 +65,9 @@ class Spectra:
         # make a first guess of peak width
         # also updates max, and max position
         self.guess_peak_width()
+
+        # clone the y list so that any modifications can be reset
+        self.y_bak = self.y[:]
 
     def getxy(self, file_name, headers=False):
         """Extracts x and y data numpy arrays from passed filename.
@@ -151,25 +155,55 @@ class Spectra:
         """ Smooths data using savgol_filter """
         self.y_smooth = signal.savgol_filter(self.y, window_size, order)
 
-    def find_background(self):
-        """ Attempts to find the background of the spectra,
+    def butter_lp_filter(self, cutoff=None, order=2):
+        """
+        Performs a low pass butterworth filter on the data with cutoff
+        frequency that defaults to 2/len(y)
+
+        Arguments
+        ---------
+        cutoff (float) [default: 2/len(y)]
+            cutoff frequency at which to filter the data
+        order (int) [default: 2]
+            filter order
+
+        Returns
+        -------
+        (array)
+            low pass filtered array same size as data
+        """
+        if cutoff is None:
+            cutoff = 2 / len(self.y)
+        B, A = signal.butter(order, cutoff, output='ba')
+        return signal.filtfilt(B, A, self.y)
+
+    def find_background(self, cutoff=None, order=2):
+        """ Attempts to find the background of the spectra using low
+        pass filter
+
+        Arguments
+        ---------
+        cutoff (float) [default: 2/len(y)]
+            cutoff frequency at which to filter the data
+        order (int) [default: 2]
+            filter order
 
         Updates
         -------
         bg : array
             background spectrum
 
-        Arguments
-        ---------
         """
-
         print "Finding background ... "
-        pass
+        if cutoff is None:
+            cutoff = 2 / len(self.y)
+        # use the low pass filter to find the background
+        self.bg = self.butter_lp_filter(cutoff, order)
 
     def subtract_background(self):
         """ Subtract background from active spectra """
         print "Subtracting background ... "
-        pass
+        self.y = self.y - self.bg
 
     def find_peaks(self, width=None, w_range=5, threshold=5, limit=20,
                    smooth=False):
@@ -212,7 +246,7 @@ class Spectra:
             y = self.y
 
         x = self.x
-        xscale = len(x)/(max(x)-min(x))
+        xscale = len(x) / (max(x) - min(x))
 
         if width is None:
             width = self.test_peak_width
@@ -229,7 +263,7 @@ class Spectra:
 
         # remove peaks that are not above the threshold.
         peak_pos = [i for i in peak_pos if
-                    (y[i]/self.data_max) > (threshold/100)]
+                    (y[i] / self.data_max) > (threshold / 100)]
 
         print "After filtering out peaks below ", threshold, \
             "percent, we have ", len(peak_pos), " peaks."
@@ -237,7 +271,7 @@ class Spectra:
         # only use the most intense peaks, zip two lists together,
         # make the y-values as the first item, and sort by it (descending)
         peak_pos = [y1 for (x1, y1) in sorted(zip(y[peak_pos], peak_pos),
-                    reverse=True)]
+                                              reverse=True)]
 
         self.peak_pos = sorted(peak_pos[0:limit])
         self.num_peaks = len(self.peak_pos)
@@ -293,7 +327,7 @@ class Spectra:
         # print re.sub(',','\n',pars.viewvalues())
 
         # set inital background as flat line at zeros
-        for i in range(bg_ord+1):
+        for i in range(bg_ord + 1):
             pars['bg_c%i' % i].set(0)
 
         # give values for other peaks
@@ -301,16 +335,22 @@ class Spectra:
             print 'Peak %i: pos %s, height %s' % (i, x[peak], y[peak])
             # could set bounds #, min=x[peak]-5, max=x[peak]+5)
             pars['p%s_center' % i].set(x[peak])
-            pars['p%s_sigma' % i].set(pw/2, min=pw*0.25, max=pw*2)
+            pars['p%s_sigma' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
             # here as well #, min=0, max=2*max(y))
-            pars['p%s_amplitude' % i].set(y[peak]*(pw/2)*np.pi)
+            pars['p%s_amplitude' % i].set(y[peak] * (pw / 2) * np.pi)
 
         self.pars = pars
         self.model = model
 
     def fit_data(self):
-        """ Attempt to fit data using lmfit fit function with the
-        generated model. Updates model with fit parameters. """
+        """
+        Attempt to fit data using lmfit fit function with the
+        generated model. Updates model with fit parameters.
+
+        Updates
+        -------
+        out
+        """
 
         print "Fitting Data..."
         out = self.model.fit(self.y, self.pars, x=self.x)
@@ -321,8 +361,8 @@ class Spectra:
         """ Return fit paramters and standard error, modified from lmfit
         class. Can output same data to file if passed file path
 
-        Options
-        -------
+        Arguments
+        ---------
         filename : string (default: None)
             If filename is given write data to that file as csv
 
@@ -380,36 +420,13 @@ class Spectra:
 
         """
         if max_width is None:
-            max_width = self.num_points/5
+            max_width = self.num_points / 5
 
         self.data_max = max(self.y)
         self.data_max_pos = np.argmax(self.y)
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
         print "Peak width of about %s (in x-data units)" % self.test_peak_width
-
-    def remove_spikes(self, strength=0.5):
-        """ Attempts to remove spikes in active set using a simple test of
-        the pixels around it. Fractional value of strength needed.
-
-        Arguments
-        ---------
-        strength : float (default: 0.5)
-            ratio of data point over average of surrounding points must be to
-            count as a spike
-        """
-        print "Removing spikes..."
-
-        # !!! Try scipy.signal.medfilt
-        def mean(x, y): return (x+y)/2
-
-        y = self.base.y
-        data_max = max(y)
-        for i in range(1, len(y)-1):
-            if (np.abs(y[i] - mean(y[i-1], y[i+1]))/data_max) > strength:
-                y[i] = mean(y[i-1], y[i+1])
-        return
-        # self.base.y = y # don't need because of python lazy copying ??
 
     def find_fwhm(self, position):
         """ Find the fwhm of a point using a very simplistic algorithm.
@@ -428,14 +445,14 @@ class Spectra:
         """
         left = position
         right = position
-        half_max = self.y[position]/2
+        half_max = self.y[position] / 2
 
         # change max_width to function of data set
 
         # make sure index does not get out of bounds
         while (self.y[left] > half_max and left > 0):
-            left = left-1
-        while (self.y[right] > half_max and right < (self.num_points-1)):
+            left = left - 1
+        while (self.y[right] > half_max and right < (self.num_points - 1)):
             right = right + 1
 
         # left = find index to left when height is below half_max
@@ -462,3 +479,9 @@ class Spectra:
         # Save the old data etc.
 
         pass
+
+    def reset(self):
+        """
+        Reset the y data to the original value
+        """
+        self.y = self.y_bak
