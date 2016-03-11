@@ -68,6 +68,7 @@ class Spectra:
 
         # clone the y list so that any modifications can be reset
         self.y_bak = self.y[:]
+        self.x_bak = self.x[:]
 
     def getxy(self, file_name, headers=False):
         """Extracts x and y data numpy arrays from passed filename.
@@ -394,6 +395,21 @@ class Spectra:
     # Helper functions
     # ---
 
+    def crop(self, xmin, xmax):
+        """
+
+        Crops data using x values
+        """
+        r1 = np.argmin(abs(self.x - xmin))
+        r2 = np.argmin(abs(self.x - xmax))
+        # print r1,r2
+        if r1 < r2:
+            self.x, self.y = self.x[r1:r2], self.y[r1:r2]
+        elif r1 > r2:
+            self.x, self.y = self.x[r2:r1], self.y[r2:r1]
+        else:
+            print "Error, no subrange"
+
     def guess_peak_width(self, max_width=None):
         """ Find an initial guess for the peak with of the data imported,
         use in peak finding and model buildings and other major functions,
@@ -427,6 +443,12 @@ class Spectra:
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
         print "Peak width of about %s (in x-data units)" % self.test_peak_width
+
+    def set_peak_width(self, width):
+        """
+        Sets peak width
+        """
+        self.test_peak_width = width
 
     def find_fwhm(self, position):
         """ Find the fwhm of a point using a very simplistic algorithm.

@@ -1,7 +1,7 @@
 spectra
 =======
 
-Basic spectral analysis using lmfit. Designed for optical spectroscopic data such as UV-Vis, IR, Raman, Photoluminescence, but can be used for a variety of other data types such as X-ray diffraction, NMR, Mass spec data.
+Basic spectral analysis and automation using lmfit. Designed for optical spectroscopic data such as UV-Vis, IR, Raman, Photoluminescence, but can be used for a variety of other data types such as X-ray diffraction, NMR, Mass spec data.
 
 Performs some basic data cleanup (background fitting, noise removal). Can conduct basic peak finding using continuous wavelet transformation and generate a list of parameters (peak position, FWHM, amplitude) to send to `lmfit` as initial model parameters. Fit results including uncertainties are retrieved from `lmfit` and output.
 
@@ -66,8 +66,6 @@ For more details see docstring of individual function
 	+ Sets `bg` numpy array
 - subtract_background()
 	+ Subtracts `bg` from active data
-- remove_spikes()
-	+ Attempts to very sharp noise from data
 - guess_peak_width(max_width=50)
 	+ attempt to guess an approximate scale for the width of the peaks to improve peak finding
 - find_peaks(limit=30, lower=2, upper=10)
