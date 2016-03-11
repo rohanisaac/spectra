@@ -15,7 +15,7 @@ import numpy as np
 import re
 import pandas as pd
 from scipy import signal
-from lmfit.models import LorentzianModel, PolynomialModel
+from lmfit.models import LorentzianModel, PolynomialModel, GaussianModel, VoigtModel
 
 
 class Spectra:
@@ -319,9 +319,16 @@ class Spectra:
         model = PolynomialModel(bg_ord, prefix='bg_')
         pars = model.make_params()
 
+        if peak_type == 'LO':
+            PeakModel = LorentzianModel
+        elif peak_type == 'GA':
+            PeakModel = GaussianModel
+        elif peak_type == 'VO':
+            PeakModel = VoigtModel
+
         # add lorentizian peak for all peaks
         for i, peak in enumerate(peak_guess):
-            temp_model = LorentzianModel(prefix='p%s_' % i)
+            temp_model = PeakModel(prefix='p%s_' % i)
             pars.update(temp_model.make_params())
             model += temp_model
 
