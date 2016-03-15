@@ -12,10 +12,14 @@ author: Rohan Isaac
 
 from __future__ import division
 import numpy as np
+from numpy import sqrt, pi
 import re
 import pandas as pd
 from scipy import signal
-from lmfit.models import LorentzianModel, PolynomialModel, GaussianModel, VoigtModel
+from lmfit import Model
+from lmfit.models import PolynomialModel
+from lmfit.lineshapes import lorentzian, gaussian, voigt
+from uncertainties import ufloat
 
 
 class Spectra:
@@ -320,21 +324,23 @@ class Spectra:
         pars = model.make_params()
 
         if peak_type == 'LO':
-            PeakModel = LorentzianModel
+            peak_function = lorentzian
+            self.afactor = pi
+            self.wfactor = 2.0
         elif peak_type == 'GA':
-            PeakModel = GaussianModel
+            peak_function = gaussian
+            self.afactor = sqrt(2*pi)
+            self.wfactor = 2.354820
         elif peak_type == 'VO':
-            PeakModel = VoigtModel
+            peak_function = voigt
+            self.afactor = sqrt(2*pi)
+            self.wfactor = 3.60131
 
         # add lorentizian peak for all peaks
         for i, peak in enumerate(peak_guess):
-            temp_model = PeakModel(prefix='p%s_' % i)
+            temp_model = Model(peak_function, prefix='p%s_' % i)
             pars.update(temp_model.make_params())
             model += temp_model
-
-        # print model
-        # pars = model.make_params()
-        # print re.sub(',','\n',pars.viewvalues())
 
         # set inital background as flat line at zeros
         for i in range(bg_ord + 1):
@@ -347,7 +353,7 @@ class Spectra:
             pars['p%s_center' % i].set(x[peak])
             pars['p%s_sigma' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
             # here as well #, min=0, max=2*max(y))
-            pars['p%s_amplitude' % i].set(y[peak] * (pw / 2) * np.pi)
+            pars['p%s_amplitude' % i].set(self.amplitude(y[peak],(pw / 2)))
 
         self.pars = pars
         self.model = model
@@ -383,6 +389,8 @@ class Spectra:
             False: Return data as string (csv)
         """
 
+        # notes -- need to make output model accurate
+
         params = self.out.params
         dat_out = ''
         for name in list(params.keys()):
@@ -405,6 +413,20 @@ class Spectra:
     # ---
     # Helper functions
     # ---
+    def print_peak_results(self):
+        """
+        Compute all peak results including additional outputs such as Height
+        and FWHM
+        """
+        params = self.out.params
+        print '\tPosition\tHeight\tFWHM'
+        for p in range(self.num_peaks):
+            center = ufloat(params['p%s_center' % p].value, params['p%s_center' % p].stderr)
+            amplitude = ufloat(params['p%s_amplitude' % p].value, params['p%s_amplitude' % p].stderr)
+            sigma = ufloat(params['p%s_sigma' % p].value, params['p%s_sigma' % p].stderr)
+            height = self.height(amplitude, sigma)
+            fwhm = self.fwhm(sigma)
+            print 'Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm)
 
     def crop(self, xmin, xmax):
         """
@@ -522,3 +544,36 @@ class Spectra:
         Reset the y data to the original value
         """
         self.y = self.y_bak
+
+    def height(self, amplitude, sigma):
+        """
+        Converts amplitude to height
+
+        Factors:
+        lorentzian: pi
+        gaussain: sqrt(2*pi)
+        voigt: sqrt(2*pi)
+        """
+        return amplitude / (sigma * self.afactor)
+
+    def amplitude(self, height, sigma):
+        """
+        Converts amplitude to height
+
+        Factors:
+        lorentzian: pi
+        gaussain: sqrt(2*pi)
+        voigt: sqrt(2*pi)
+        """
+        return height * (sigma * self.afactor)
+
+    def fwhm(self, sigma):
+        """
+        Converts sigma to fwhm
+
+        Factors:
+        lorentzian: 2.0
+        gaussain: 2.354820
+        voigt: 3.60131
+        """
+        return self.wfactor * sigma
