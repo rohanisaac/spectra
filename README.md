@@ -93,30 +93,19 @@ plt.plot(S.x,S.md,'r-') # fitted y-data
 Data Members
 ------------
 
-base : spec object
-    Store the active x,y data, loads the file,
-    used for fitting routines
-oy : original y-data
+x : active x-data
+y : active y-data
+y_bak : original y-data
+x_bak : original x-data
 bg : background y-data
-md : model y-data
-fd : fitted model y-data
-ox : original x-data
-xc : corrected x-data
-num_points : int
-    number of data points in
-num_peaks : int
-    number of
-peak_pos : list
-    x positions of peaks
-m : model object
-    peak-o-mat model used in fitting
-model_str : string
-    model string used for building peak-o-mat model
-data_max : int
-    max of y-data
-data_max_pos : int
-    index associated with max data
-
+y_smooth : smoothed y-data
+num_points : length of data
+num_peaks : number of peaks found
+peak_pos (list) : x positions of peaks
+model : lmfit model used in fitting
+pars : parameters to optimize with lmfit
+out : fitted model
+test_peak_width : peak width used for finding peaks
 
 Todo
 ----
