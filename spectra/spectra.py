@@ -2,13 +2,10 @@
 Spectra class
 -------------
 Analyze spectral data using combination of numpy, scipy, lmfit and
-some simple algorithms
+some primitive algorithms
 
 author: Rohan Isaac
 """
-
-# keep only one spec object, lots of y-data
-# print in class functions, not in driver
 
 from __future__ import division
 import numpy as np
@@ -329,11 +326,11 @@ class Spectra:
             self.wfactor = 2.0
         elif peak_type == 'GA':
             peak_function = gaussian
-            self.afactor = sqrt(2*pi)
+            self.afactor = sqrt(2 * pi)
             self.wfactor = 2.354820
         elif peak_type == 'VO':
             peak_function = voigt
-            self.afactor = sqrt(2*pi)
+            self.afactor = sqrt(2 * pi)
             self.wfactor = 3.60131
 
         # add lorentizian peak for all peaks
@@ -353,7 +350,7 @@ class Spectra:
             pars['p%s_center' % i].set(x[peak])
             pars['p%s_sigma' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
             # here as well #, min=0, max=2*max(y))
-            pars['p%s_amplitude' % i].set(self.amplitude(y[peak],(pw / 2)))
+            pars['p%s_amplitude' % i].set(self.amplitude(y[peak], (pw / 2)))
 
         self.pars = pars
         self.model = model
@@ -410,6 +407,7 @@ class Spectra:
             return all_data
         else:
             return dat_out
+
     # ---
     # Helper functions
     # ---
