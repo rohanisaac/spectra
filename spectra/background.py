@@ -15,7 +15,7 @@ def find_background(self, cutoff=None, order=2):
         background spectrum
 
     """
-    print "Finding background ... "
+    print("Finding background ... ")
     if cutoff is None:
         cutoff = 2 / len(self.y)
     # use the low pass filter to find the background
@@ -24,7 +24,7 @@ def find_background(self, cutoff=None, order=2):
 
 def subtract_background(self):
     """ Subtract background from active spectra """
-    print "Subtracting background ... "
+    print("Subtracting background ... ")
     self.y = self.y - self.bg
 
 

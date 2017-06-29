@@ -12,7 +12,7 @@ some primitive algorithms
 author: Rohan Isaac
 """
 
-from __future__ import division
+
 import numpy as np
 from numpy import sqrt, pi
 import re
@@ -59,10 +59,10 @@ class Spectra:
 
         """
         # import data into spec object
-        print "Loading file ... "
+        print("Loading file ... ")
         if len(args) == 1:
             file_name = args[0]
-            print file_name
+            print(file_name)
             self.x, self.y = self.getxy(file_name)
         elif len(args) == 2:
             self.x, self.y = args
@@ -126,7 +126,7 @@ class Spectra:
                     elif re.search(',', lin):
                         sep_char = ','
                     else:
-                        print "Unknown separator character"
+                        print("Unknown separator character")
                     # now we know what separator is for the data
                     dat_read = True
 
@@ -201,7 +201,7 @@ class Spectra:
             background spectrum
 
         """
-        print "Finding background ... "
+        print("Finding background ... ")
         if cutoff is None:
             cutoff = 2 / len(self.y)
         # use the low pass filter to find the background
@@ -210,7 +210,7 @@ class Spectra:
 
     def subtract_background(self):
         """ Subtract background from active spectra """
-        print "Subtracting background ... "
+        print("Subtracting background ... ")
         self.y = self.y - self.bg
 
     def find_peaks(self, width=None, w_range=5, threshold=5, limit=20,
@@ -240,7 +240,7 @@ class Spectra:
             number of peaks found
 
         """
-        print "Looking for peaks ... "
+        print("Looking for peaks ... ")
 
         if smooth:
             try:
@@ -267,14 +267,14 @@ class Spectra:
 
         peak_pos = signal.find_peaks_cwt(y, np.linspace(lower, upper, w_range))
 
-        print "Found %s peaks at %s" % (len(peak_pos), peak_pos)
+        print("Found %s peaks at %s" % (len(peak_pos), peak_pos))
 
         # remove peaks that are not above the threshold.
         peak_pos = [i for i in peak_pos if
                     (y[i] / self.data_max) > (threshold / 100)]
 
-        print "After filtering out peaks below ", threshold, \
-            "percent, we have ", len(peak_pos), " peaks."
+        print("After filtering out peaks below ", threshold, \
+            "percent, we have ", len(peak_pos), " peaks.")
 
         # only use the most intense peaks, zip two lists together,
         # make the y-values as the first item, and sort by it (descending)
@@ -284,7 +284,7 @@ class Spectra:
         self.peak_pos = sorted(peak_pos[0:limit])
         self.num_peaks = len(self.peak_pos)
 
-        print "Using ", self.num_peaks, " peaks at ", self.peak_pos
+        print("Using ", self.num_peaks, " peaks at ", self.peak_pos)
         return self.num_peaks, self.peak_pos
 
     def build_model(self, peak_type='LO', max_width=None, bg_ord=2):
@@ -318,7 +318,7 @@ class Spectra:
         y = self.y
         pw = self.test_peak_width
         peak_guess = self.x[self.peak_pos]
-        print "Building model ... "
+        print("Building model ... ")
 
         # start with polynomial background
         # second order
@@ -350,7 +350,7 @@ class Spectra:
 
         # give values for other peaks
         for i, peak in enumerate(self.peak_pos):
-            print 'Peak %i: pos %s, height %s' % (i, x[peak], y[peak])
+            print('Peak %i: pos %s, height %s' % (i, x[peak], y[peak]))
             # could set bounds #, min=x[peak]-5, max=x[peak]+5)
             pars['p%s_center' % i].set(x[peak])
             pars['p%s_sigma' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
@@ -371,9 +371,9 @@ class Spectra:
         fitted object
         """
 
-        print "Fitting Data..."
+        print("Fitting Data...")
         out = self.model.fit(self.y, self.pars, x=self.x)
-        print out.fit_report(show_correl=False)
+        print(out.fit_report(show_correl=False))
         self.out = out
         return self.out
 
@@ -404,7 +404,7 @@ class Spectra:
                 f.write(dat_out)
         if pandas:
             from io import StringIO
-            all_data = pd.read_csv(StringIO(unicode(dat_out)),
+            all_data = pd.read_csv(StringIO(str(dat_out)),
                                    delimiter='\t',
                                    header=None,
                                    index_col=0,
@@ -422,14 +422,14 @@ class Spectra:
         and FWHM
         """
         params = self.out.params
-        print '\tPosition\tHeight\tFWHM'
+        print('\tPosition\tHeight\tFWHM')
         for p in range(self.num_peaks):
             center = ufloat(params['p%s_center' % p].value, params['p%s_center' % p].stderr)
             amplitude = ufloat(params['p%s_amplitude' % p].value, params['p%s_amplitude' % p].stderr)
             sigma = ufloat(params['p%s_sigma' % p].value, params['p%s_sigma' % p].stderr)
             height = self.height(amplitude, sigma)
             fwhm = self.fwhm(sigma)
-            print 'Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm)
+            print('Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm))
 
     def crop(self, xmin, xmax):
         """
@@ -447,7 +447,7 @@ class Spectra:
         elif r1 > r2:
             self.x, self.y = self.x[r2:r1], self.y[r2:r1]
         else:
-            print "Error, no subrange"
+            print("Error, no subrange")
 
     def guess_peak_width(self, max_width=None):
         """ Find an initial guess for the peak with of the data imported,
@@ -481,7 +481,7 @@ class Spectra:
         self.data_max_pos = np.argmax(self.y)
         self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
-        print "Peak width of about %s (in x-data units)" % self.test_peak_width
+        print("Peak width of about %s (in x-data units)" % self.test_peak_width)
         return self.data_max, self.data_max_pos, self.test_peak_width
 
     def set_peak_width(self, width):

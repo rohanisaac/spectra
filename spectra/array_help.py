@@ -1,7 +1,7 @@
 """
 NOTE: Not renamed array due to potential problems seen opening notebooks (only affects when started in the same directory, not an issue in general
 """
-from __future__ import division
+
 import numpy as np
 
 def find_nearest(array, value):
@@ -25,4 +25,4 @@ def copy_range(x, y, xmin, xmax):
     elif r1 > r2:
         return x[r2:r1], y[r2:r1]
     else:
-        print "Error, no subrange"
+        print("Error, no subrange")

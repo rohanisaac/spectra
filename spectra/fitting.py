@@ -1,9 +1,8 @@
-from __future__ import division
+
 import numpy as np
 from lmfit.models import PolynomialModel
 from lmfit import Model
-from peaks import gaussian, lorentzian, voigt, guess_peak_width
-
+from .peaks import gaussian, lorentzian, voigt, guess_peak_width
 
 def fit_data(x, y, peak_pos, peak_type='LO', max_width=None, bg_ord=2):
     """ Builds a lmfit model of peaks in listed by index in `peak_pos`
@@ -84,7 +83,7 @@ def output_results(fit_model, filename=None, pandas=False):
     """
     params = fit_model.params
     dat_out = []
-    for name in params.keys():
+    for name in list(params.keys()):
         par = params[name]
         dat_out.append((name, par.value, par.stderr))
 
@@ -102,7 +101,7 @@ def output_results(fit_model, filename=None, pandas=False):
             else:
                 return out_df
         except ImportError:
-            print "Need pandas to output to file or pandas dataframe"
+            print("Need pandas to output to file or pandas dataframe")
     else:
         return output_np
 

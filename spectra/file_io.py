@@ -2,6 +2,16 @@ import os
 import re
 import numpy as np
 
+def path(*args):
+    """
+    Return path relative to home
+
+    Parameters
+    ----------
+    Comma separated directories
+    """
+    return os.path.join(os.path.expanduser('~'), *args)
+
 def assure_path_exists(path):
     """
     Create directory structure of file if it doens't already exist
@@ -54,7 +64,7 @@ def getxy(file_name, headers=False):
             line_pos += 1
             # if line contains any of the alphabet (except e for exponents,
             # not data)
-            if re.search('[a-df-zA-DF-Z]', lin):
+            if re.search(b'[a-df-zA-DF-Z]', lin):
                 if not dat_read:
                     # before data has been read, set start of data pos
                     start_pos = line_pos
@@ -67,12 +77,12 @@ def getxy(file_name, headers=False):
             # if data line and data has not been read
             elif not dat_read:
                 # find seperator
-                if re.search('\t', lin):
+                if re.search(b'\t', lin):
                     sep_char = '\t'
-                elif re.search(',', lin):
+                elif re.search(b',', lin):
                     sep_char = ','
                 else:
-                    print "Unknown separator character"
+                    print("Unknown separator character")
                 # now we know what separator is for the data
                 dat_read = True
 
@@ -124,43 +134,41 @@ def clean_file(infile, outfile):
     x, y = getxy(infile)
     write2col(outfile, x, y)
 
-def batch_load(folder, extension=None, delimiter=None):
+def load_folder(path, extension='csv'):
     """
-    Load a batch of files in a folder into a 2-d numpy array
+    Load all the files from a folder assuming they are a number of files
+    file1.ext
+    file2.ext
+    ...
+    filen.ext
 
     Parameters
     ----------
-    folder (string)
-        folder path containing the text based data files, one data set per file
-        will not look in subdirectories
-    extension (string, optional)
-        a three letter extension of the text file. Defaults to all txt or csv
-        files in the directory
-    delimiter (character)
-        Single character corresponding to the datatype separating the columns in
-        the text file. Use delimiter='fwf' for fixed width text format
+    path (str)
+        full path to the folder
+    extension (str)
+        file extension to filter by in the folder
 
     Returns
     -------
-    x (1-d array)
-        x values (common for all the files, taken from first file read)
-    data (2-d array)
-        array of shape=(num_files, data_points) containing all the y data
-    f_names (list)
-        list containing the filenames of the files, same order as data
+    y-values (2d array)
+        (nfiles x ndata) array containing all the yvalues
+    x-values (2d array)
+        (nfiles x ndata) array containing all the xvalues
+    filenames (list)
+        array containing all the filenames corresponding to the each file
+        processed in the order they were processed
     """
-    # generate a list of names
-    f_names = []
-    for f in os.listdir(folder):
-        f_lower = f.to_lower()
-        if f_lower.endswith('csv') or f_lower.endswith('txt'):
-            f_names.apped(f)
-    x, y = getxy(os.path.join(folder, f_name[0]))
+    # start with arrays b/c we don't know size
+    x_values = []
+    y_values = []
+    filenames = []
 
-    # allocate space for data
-    data = np.zeros(len(f_name), len(x))
-    for i, f in enumerate(f_name):
-        _, y = getxy(os.path.join(folder, f))
-        data[i, :] = y
+    for f in os.listdir(path):
+        if f.lower().endswith(extension):
+            x, y = getxy(os.path.join(path, f))
+            x_values.append(x)
+            y_values.append(y)
+            filenames.append(f)
 
-    return x, data, f_names
+    return np.array(x_values), np.array(y_values), filenames

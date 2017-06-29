@@ -3,7 +3,7 @@ Conversion of spectra class to functions
 author: Rohan Isaac
 """
 
-from __future__ import division
+
 import numpy as np
 from numpy import sqrt, pi
 import re
@@ -24,14 +24,14 @@ def print_peak_results(self):
     and FWHM
     """
     params = self.out.params
-    print '\tPosition\tHeight\tFWHM'
+    print('\tPosition\tHeight\tFWHM')
     for p in range(self.num_peaks):
         center = ufloat(params['p%s_center' % p].value, params['p%s_center' % p].stderr)
         amplitude = ufloat(params['p%s_amplitude' % p].value, params['p%s_amplitude' % p].stderr)
         sigma = ufloat(params['p%s_sigma' % p].value, params['p%s_sigma' % p].stderr)
         height = self.height(amplitude, sigma)
         fwhm = self.fwhm(sigma)
-        print 'Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm)
+        print('Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm))
 
 def guess_peak_width(self, max_width=None):
     """ Find an initial guess for the peak with of the data imported,
@@ -65,7 +65,7 @@ def guess_peak_width(self, max_width=None):
     self.data_max_pos = np.argmax(self.y)
     self.test_peak_width = self.find_fwhm(self.data_max_pos)
 
-    print "Peak width of about %s (in x-data units)" % self.test_peak_width
+    print("Peak width of about %s (in x-data units)" % self.test_peak_width)
     return self.data_max, self.data_max_pos, self.test_peak_width
 
 def set_peak_width(self, width):

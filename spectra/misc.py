@@ -1,4 +1,4 @@
-from __future__ import division
+
 import numpy as np
 from scipy.constants import h, c, k
 
@@ -21,7 +21,7 @@ def crop(self, xmin, xmax):
     elif r1 > r2:
         self.x, self.y = self.x[r2:r1], self.y[r2:r1]
     else:
-        print "Error, no subrange"
+        print("Error, no subrange")
 
 
 def generate_spectrum(wavelengths, peak_pos, peak_amp, width=5):

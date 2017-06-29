@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-from file_io import getxy
+from .file_io import getxy
 
 def plotxy(filename):
     x, y = getxy(filename)
