@@ -1,6 +1,7 @@
 
 import numpy as np
 import os
+from . import find_nearest_index
 
 def normalize(x, type='1-norm'):
     """ Returns the normalized vector
@@ -125,3 +126,13 @@ def normalize_pq(dat):
         norm[i, :] = int_norm[i, :] / mead
 
     return norm
+
+def normalize_2pt(x, y, xmin, xmax, ymin=0, ymax=1):
+    """
+    Normalize a spectrum to two points, not very rigorous
+    """
+    xmini = find_nearest_index(x, xmin)
+    xmaxi = find_nearest_index(x, xmax)
+    y_floor = y - y[xmini]
+    y_norm = y_floor/y_floor[xmaxi]
+    return x, y_norm

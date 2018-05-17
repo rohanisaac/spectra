@@ -1,3 +1,5 @@
+import numpy as np
+
 def wl2wn(wl):
     """
     Converts wavelength (nm) to wavenumber (1/cm)
@@ -23,3 +25,9 @@ def rwn2wl(wn, wl):
     Converts relative wavenumber to wavelength using a wavelength reference
     """
     return wn2wl(rwn2wn(wn, wl))
+
+def absorption(transmission):
+    """
+    Convert transmission data from a percent scale (0-100) to an absorption values
+    """
+    return (2 - np.log10(transmission))
