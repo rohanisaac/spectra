@@ -4,7 +4,8 @@ from scipy import signal
 from numpy import log, exp
 
 def find_peaks(x, y, width=5, threshold=5, limit=20):
-    """ Find peaks in active data set using continuous wavelet transformation
+    """
+    Find peaks in active data set using continuous wavelet transformation
 
     Parameters
     ----------

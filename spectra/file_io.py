@@ -172,3 +172,10 @@ def load_folder(path, extension='csv'):
             filenames.append(f)
 
     return np.array(x_values), np.array(y_values), filenames
+
+def quick_load_xy(path, delimiter=",", skip_header=1):
+    """
+    Read a file using numpy.genfromtext to x, y
+    """
+    data = np.genfromtxt(path, delimiter=delimiter, skip_header=skip_header)
+    return data[:, 0], data[:, 1]

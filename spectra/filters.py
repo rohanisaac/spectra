@@ -1,8 +1,18 @@
+"""
+Collection of filters
+"""
+
 from scipy import signal
 
-def smooth_data(self, window_size=25, order=2):
-    """ Smooths data using savgol_filter """
-    self.y_smooth = signal.savgol_filter(self.y, window_size, order)
+def smooth_data(y, window_size=None, order=2):
+    """
+    Smooths data using the Savitzy Golay filter
+    Has some decent defaults 
+    """
+    if window_size is None:
+        # needs to be odd
+        window_size = int(len(y)/25)*2 + 1
+    return signal.savgol_filter(y, window_size, order)
 
 def butter_lp_filter(self, cutoff=None, order=2):
     """
@@ -68,6 +78,7 @@ def savgol_filter():
 def butterworth_bandpass(b, a, data):
     return y
 
+"""
 ## for fitting sin's gaussian etc:
 
 http://scipy-cookbook.readthedocs.io/items/FittingData.html
@@ -85,3 +96,28 @@ http://scipy-cookbook.readthedocs.io/items/robust_regression.html
 
 ### Probs not relevant most cases
 https://en.wikipedia.org/wiki/Random_sample_consensus
+"""
+
+"""
+from scipy.signal import butter, filtfilt
+import matplotlib.mlab as mlab
+
+data1 = data3d[3]
+dtst = data1[:, af.find_nearest_index(td, 0)]
+
+fs = 1024
+NFFT = 1 * fs
+bb, ab = butter(4, 25. * 2. / fs, btype='low')
+dtstfilt = filtfilt(bb, ab, dtst)
+
+# compute power spectral density using welch's method
+# compare to scipy.signal.welch
+pxx, freqs = mlab.psd(dtst, Fs=fs, NFFT=NFFT)
+pxx2, freqs2 = mlab.psd(dtstfilt, Fs=fs, NFFT=NFFT)
+
+plt.figure(1)
+plt.loglog(freqs, np.sqrt(pxx), 'r-', freqs2, np.sqrt(pxx2), 'k-')
+plt.xlabel('Freq (Hz)')
+plt.figure(2)
+plt.plot(wave, dtst, 'r-', wave, dtstfilt, 'k-')
+"""

@@ -1,6 +1,7 @@
 
 import numpy as np
 from scipy.constants import h, c, k
+from .peaks import lorentzian
 
 A1 = (2 * np.pi**2 / 45) * (h / c)
 A2 = -1 * h * c / k
