@@ -12,6 +12,7 @@ from .file_io import assure_path_exists, write2col, getxy, clean_file, \
 from .normalize import normalize, normalize_msc, normalize_pq
 from .filters import smooth_data, butter_lp_filter
 from .calibrate import calibrate
+from .read_files import read_cary, read_craic
 # Need to actually make some of these work
 # from filters import smooth_data, butter_lp_filter, butter_lowpass_filter, \
 #                     butter_lowpass, wicker, savgol, butterworth_bandpass
