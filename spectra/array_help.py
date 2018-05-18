@@ -53,6 +53,20 @@ def copy_range_array(x, y, xmin, xmax):
     else:
         print("Error, no subrange")
 
+def copy_range_yarray(x0, y, xmin, xmax):
+    """
+    Copy range from x,y data based on x values, but here x and y are both arrays
+    """
+    r1 = np.argmin(abs(x0 - xmin))
+    r2 = np.argmin(abs(x0 - xmax))
+    # print r1,r2
+    if r1 < r2:
+        return x0[r1:r2], y[:, r1:r2]
+    elif r1 > r2:
+        return x0[r2:r1], y[:, r2:r1]
+    else:
+        print("Error, no subrange")
+
 def sort_by_list(names, x, y):
     """
     Sort x and y array by the list values

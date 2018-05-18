@@ -64,4 +64,18 @@ def read_craic(file):
             # stop reading when hit a blank line
             elif l in ['\n', '\r\n']:
                 break
-    return np.genfromtxt(file, delimiter=',', skip_header=9, names=['Wavelength_nm', columns[0]])
+    return np.genfromtxt(file, delimiter=',', skip_header=9, names=['Wavelength', columns[0]])
+
+@data_details
+def read_nicolet(file):
+    """
+    Read text file created by Nicolet Nexus FTIR software and return a single numpy array with the data and
+    column labels
+    
+    Parameters
+    ----------
+    filename: str
+        Full path to the file to open (relative/absolute)
+    
+    """
+    return np.genfromtxt(file, delimiter=',', names=['Wavenumber', 'Absorbance'])

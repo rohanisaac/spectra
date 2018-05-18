@@ -134,7 +134,7 @@ def clean_file(infile, outfile):
     x, y = getxy(infile)
     write2col(outfile, x, y)
 
-def load_folder(path, extension='csv'):
+def load_folder(path, extension='csv', reader=getxy):
     """
     Load all the files from a folder assuming they are a number of files
     file1.ext
@@ -148,6 +148,8 @@ def load_folder(path, extension='csv'):
         full path to the folder
     extension (str)
         file extension to filter by in the folder
+    reader (function)
+        Function to read the files with
 
     Returns
     -------
@@ -166,7 +168,22 @@ def load_folder(path, extension='csv'):
 
     for f in os.listdir(path):
         if f.lower().endswith(extension):
-            x, y = getxy(os.path.join(path, f))
+            dat = reader(os.path.join(path, f))
+            if isinstance(dat, tuple) and len(dat) == 2:
+                # If they return two elements, must be x and y
+                x, y = getxy(os.path.join(path, f))
+            elif isinstance(dat, np.ndarray):
+                if dat.dtype.names is not None:
+                    # if array has header
+                    header = dat.dtype.names
+                    x = dat[header[0]]
+                    y = dat[header[1]]
+                else:
+                    x = dat[:, 0]
+                    y = dat[:, 1]
+            else:
+                print("Cannot load file %s" % f)
+                continue
             x_values.append(x)
             y_values.append(y)
             filenames.append(f)
@@ -179,3 +196,15 @@ def quick_load_xy(path, delimiter=",", skip_header=1):
     """
     data = np.genfromtxt(path, delimiter=delimiter, skip_header=skip_header)
     return data[:, 0], data[:, 1]
+
+def list_all_files(base_dir, extension='csv'):
+    """
+    Walk through a directory and list all files that end with the extension in the directory tree
+    """
+    files = []
+    for root, dirs, files in os.walk(base_dir):
+        for name in files:
+            if name.lower().endswith(extension):
+                fname = os.path.join(root, name)
+                files.append(fname)
+    return files
