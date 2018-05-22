@@ -79,3 +79,17 @@ def read_nicolet(file):
     
     """
     return np.genfromtxt(file, delimiter=',', names=['Wavenumber', 'Absorbance'])
+
+@data_details
+def read_horiba(file):
+    """
+    Read text file created by Horiba LabSpec software and return a single numpy array with the data and
+    column labels
+    
+    Parameters
+    ----------
+    filename: str
+        Full path to the file to open (relative/absolute)
+    
+    """
+    return np.genfromtxt(file, delimiter='\t', names=['Relative_Wavenumber', 'Intensity'])

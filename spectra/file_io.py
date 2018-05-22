@@ -134,7 +134,7 @@ def clean_file(infile, outfile):
     x, y = getxy(infile)
     write2col(outfile, x, y)
 
-def load_folder(path, extension='csv', reader=getxy):
+def load_folder(path, extension='csv', reader=getxy, regex='[0-9]+'):
     """
     Load all the files from a folder assuming they are a number of files
     file1.ext
@@ -165,13 +165,14 @@ def load_folder(path, extension='csv', reader=getxy):
     x_values = []
     y_values = []
     filenames = []
+    sort_key = []
 
     for f in os.listdir(path):
         if f.lower().endswith(extension):
             dat = reader(os.path.join(path, f))
             if isinstance(dat, tuple) and len(dat) == 2:
                 # If they return two elements, must be x and y
-                x, y = getxy(os.path.join(path, f))
+                x, y = dat
             elif isinstance(dat, np.ndarray):
                 if dat.dtype.names is not None:
                     # if array has header
@@ -187,8 +188,10 @@ def load_folder(path, extension='csv', reader=getxy):
             x_values.append(x)
             y_values.append(y)
             filenames.append(f)
+            sort_key.append(int(re.search(regex, f).group(0)))
+    sk, sx, sy, sf = zip(*sorted(zip(sort_key, x_values, y_values, filenames)))
 
-    return np.array(x_values), np.array(y_values), filenames
+    return np.array(sx), np.array(sy), sf, sk
 
 def quick_load_xy(path, delimiter=",", skip_header=1):
     """
