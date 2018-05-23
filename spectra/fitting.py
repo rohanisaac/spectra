@@ -7,37 +7,33 @@ from lmfit import Model
 from .peaks import gaussian, lorentzian, voigt, guess_peak_width
 from .array_help import copy_range_array
 
-def fit_data(x, y, peak_pos, peak_type='LO', max_width=None):
-    """ Builds a lmfit model of peaks in listed by index in `peak_pos`
-    Uses some basic algorithms to determine initial parameters for
-    amplitude and fwhm (limit on fwhm to avoid fitting background as peaks)
+def fit_data(x, y, peak_pos, peak_type='LO', width=None):
+    """ 
+    Builds a lmfit model of peaks in listed by index in `peak_pos` with lineshape
+    given by `peak_type`. 
 
     Parameters
     ----------
-    peak_type : string (default='lorentizian')
+    x : array
+    y : array
+    peak_pos : array of peak postion indices
+    
+    peak_type : string
         Peaks can be of the following types:
-
-        - 'LO' : symmetric lorentzian
+        - 'LO' : symmetric lorentzian (default)
         - 'GA' : symmetric gaussain
         - 'VO' : symmetric pseudo voigt
 
-    max_width : int (default = total points/10)
-        max width (in data points) that peak fitted can be
-
-    bg_ord: int
-        order of the background polynomial
-        0: constant, 1: linear, ...
+    width : float
+    amp : float
 
     Returns
     -------
-    pars : model parameters
-    model : model object
-
+    out : Fitted lmfit model
 
     """
-    # need to define peak width finding
-    pw = guess_peak_width(x, y)
-    peak_guess = x[peak_pos]
+    
+    # get appropriate line shape function
 
     if peak_type == 'LO':
         peak_function = lorentzian
@@ -46,24 +42,18 @@ def fit_data(x, y, peak_pos, peak_type='LO', max_width=None):
     elif peak_type == 'VO':
         peak_function = voigt
 
-    # start with the first peak background
+    # build model
     model = Model(peak_function, prefix='p0_')
+    for i, p in enumerate(peak_pos[1:]):
+        model += Model(peak_function, prefix='p%s_' % str(i+1))
+
     pars = model.make_params()
 
-    # add the rest of the peaks
-    if len(peak_guess) > 1:
-        for i, peak in enumerate(peak_guess[1:]):
-            temp_model = Model(peak_function, prefix='p%s_' % str(i+1))
-            pars.update(temp_model.make_params())
-            model += temp_model
-
-    # give values for other peaks
-    for i, peak in enumerate(peak_pos):
-        # could set bounds #, min=x[peak]-5, max=x[peak]+5)
-        pars['p%s_x0' % i].set(x[peak])
-        pars['p%s_fwhm' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
-        # here as well #, min=0, max=2*max(y))
-        pars['p%s_amp' % i].set(y[peak])
+    # initialize params
+    for i, p in enumerate(peak_pos):
+        pars['p%s_x0' % i].set(x[p])
+        pars['p%s_fwhm' % i].set(width, min=0)
+        pars['p%s_amp' % i].set(y[p], min=0)
 
     out = model.fit(y, pars, x=x)
     return out
