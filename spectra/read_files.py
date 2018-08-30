@@ -41,8 +41,12 @@ def read_cary(file):
             # stop reading when hit a blank line
             elif l in ['\n', '\r\n']:
                 break
+    # the last column is blank
     ncols = len(columns) - 1
-    return np.genfromtxt(file, delimiter=',', skip_header=2, max_rows=(i-2), usecols=range(ncols), names=columns[:ncols])
+    # don't need to keep the wavelength, it is the same for all of them, just keep one copy
+    usecols = [0] + list(range(1, ncols, 2))
+    names = [columns[0]] + samples[:ncols:2]
+    return np.genfromtxt(file, delimiter=',', skip_header=2, max_rows=(i-2), usecols=usecols, names=names)
 
 @data_details
 def read_craic(file):
@@ -81,7 +85,7 @@ def read_nicolet(file):
     return np.genfromtxt(file, delimiter=',', names=['Wavenumber', 'Absorbance'])
 
 @data_details
-def read_horiba(file):
+def read_horiba(file, x='wn'):
     """
     Read text file created by Horiba LabSpec software and return a single numpy array with the data and
     column labels
@@ -92,4 +96,10 @@ def read_horiba(file):
         Full path to the file to open (relative/absolute)
     
     """
-    return np.genfromtxt(file, delimiter='\t', names=['Relative_Wavenumber', 'Intensity'])
+    if x is 'wn':
+        xl = 'Relative_Wavenumber'
+    elif x is 'nm':
+        xl = 'Wavelength_nm'
+    else:
+        xl = x
+    return np.genfromtxt(file, delimiter='\t', names=[xl, 'Intensity'])

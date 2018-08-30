@@ -3,6 +3,7 @@ Various fitting functions, mainly based on lmfit
 """
 import numpy as np
 from lmfit.models import PolynomialModel
+import statsmodels.api as sm
 from lmfit import Model
 from .peaks import gaussian, lorentzian, voigt, guess_peak_width
 from .array_help import copy_range_array
@@ -59,10 +60,9 @@ def fit_data(x, y, peak_pos, peak_type='LO', width=None):
     return out
 
 
-def fit_data_bg(x, y, peak_pos, peak_type='LO', max_width=None, bg_ord=0):
-    """ Builds a lmfit model of peaks in listed by index in `peak_pos`
-    Uses some basic algorithms to determine initial parameters for
-    amplitude and fwhm (limit on fwhm to avoid fitting background as peaks)
+def fit_data_bg(x, y, peak_pos, peak_type='LO', width=None, bg_ord=0):
+    """ 
+    Builds a lmfit model of peaks in listed by index in `peak_pos`
 
     Parameters
     ----------
@@ -82,15 +82,14 @@ def fit_data_bg(x, y, peak_pos, peak_type='LO', max_width=None, bg_ord=0):
 
     Returns
     -------
-    pars : model parameters
-    model : model object
-
+    out: 
+        fitted model
 
     """
     # need to define peak width finding
-    pw = guess_peak_width(x, y)
-    peak_guess = x[peak_pos]
-
+    if width is None:
+        width = guess_peak_width(x, y)
+    
     # start with polynomial background
     model = PolynomialModel(bg_ord, prefix='bg_')
     pars = model.make_params()
@@ -102,23 +101,21 @@ def fit_data_bg(x, y, peak_pos, peak_type='LO', max_width=None, bg_ord=0):
     elif peak_type == 'VO':
         peak_function = voigt
 
-    # add lorentizian peak for all peaks
-    for i, peak in enumerate(peak_guess):
+    # add peak type for all peaks
+    for i, peak in enumerate(peak_pos):
         temp_model = Model(peak_function, prefix='p%s_' % i)
         pars.update(temp_model.make_params())
         model += temp_model
 
-    # set inital background as flat line at zeros
+    # set initial background as flat line at zeros
     for i in range(bg_ord + 1):
         pars['bg_c%i' % i].set(0)
 
-    # give values for other peaks
+    # give values for other peaks, keeping width and height positive
     for i, peak in enumerate(peak_pos):
-        # could set bounds #, min=x[peak]-5, max=x[peak]+5)
         pars['p%s_x0' % i].set(x[peak])
-        pars['p%s_fwhm' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
-        # here as well #, min=0, max=2*max(y))
-        pars['p%s_amp' % i].set(y[peak])
+        pars['p%s_fwhm' % i].set(width, min=0)
+        pars['p%s_amp' % i].set(y[peak], min=0)
 
     out = model.fit(y, pars, x=x)
     return out
@@ -213,7 +210,7 @@ def line_fit(x, y, errors=True):
         return s.value, i.value, out
 
 
-def exponential_fit(x, y, errors=True):
+def exponential_fit_offset(x, y, amp_guess=1, decay_guess=1, offset_guess=0, errors=True):
     """
     Simple helper function that speeds up single exponetial fit with offset. Uses lmfit
     
@@ -225,11 +222,15 @@ def exponential_fit(x, y, errors=True):
     Returns
     -------
     Returns slope and intercept, with uncertainties (use uncertainties package if availabe)
+
+    !!!!!
+    not tested or working
+    !!!!!
     """
     from lmfit.models import ExpressionModel
     mod = ExpressionModel("offset + amp * exp(-x/decay)")
-    par = mod.guess(y, x=x)
-    out = mod.fit(y, par, x=x)
+    par = mod.make_params(amp=amp_guess, decay=decay_guess, offset_guess=offset_guess)
+    out = mod.fit(y, params=par, x=x)
 
     s = out.params['slope']
     i = out.params['intercept']
@@ -242,3 +243,28 @@ def exponential_fit(x, y, errors=True):
             return s.value, s.stderr, i.value, i.stderr
     else:
         return s.value, i.value
+
+def exponential_fit(x, y, errors=True):
+    from lmfit.models import ExponentialModel
+    mod = ExponentialModel()
+    par = mod.guess(data=y, x=x)
+    out = mod.fit(y, params=par, x=x)
+
+    a = out.params['amplitude']
+    d = out.params['decay']
+
+    return a, d
+
+def poly_fit(x, y, order=1, err=None):
+    """
+    Use the statsmodel api to perform a OLS fit of the data to a polynomial of order (defualt=1, linear)
+
+    If error are given, perform a WLS instead. Return the fitted model 
+    """
+    X = np.column_stack((np.power(x,i) for i in range(1, order+1)))
+    X = sm.add_constant(X)
+    if err is None:
+        mod = sm.OLS(y, X)
+    else:
+        mod = sm.WLS(y, X, weights=1./(err**2))
+    return mod.fit()
