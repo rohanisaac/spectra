@@ -93,3 +93,25 @@ def find_nearest_tolerance(value, array, tolerance=10):
         return array[idx]
     else:
         return None
+
+def sort_array_column(a, c=0):
+    """
+    Sort array `a` by column `c`
+
+    Parameters
+    ----------
+    a: numpy array
+    c: column index (default 0)
+
+    Returns
+    -------
+    Sorted array of same shape
+    """
+    return a[a[:,c].argsort(kind='mergesort')]
+
+
+def split_columns(a):
+    """
+    Split into x, y
+    """
+    return a[:, 0], a[:, 1]

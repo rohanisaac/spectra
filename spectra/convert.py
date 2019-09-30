@@ -7,6 +7,12 @@ def wl2wn(wl):
     """
     return (10.0**7) / wl
 
+def wl2rwn(wl, wlr):
+    """
+    Converts wavelength (nm) to relative wavenumber (1/cm) with a reference wavelength
+    """
+    return (wl2wn(wlr) - wl2wn(wl)) 
+
 
 def wn2wl(wn):
     """

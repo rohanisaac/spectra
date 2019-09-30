@@ -3,6 +3,8 @@ Collection of filters
 """
 
 from scipy import signal
+from scipy.interpolate import interp1d
+import numpy as np
 
 def smooth_data(y, window_size=None, order=2):
     """
@@ -121,3 +123,8 @@ plt.xlabel('Freq (Hz)')
 plt.figure(2)
 plt.plot(wave, dtst, 'r-', wave, dtstfilt, 'k-')
 """
+
+def resample(x, y, npts, kind='linear'):
+    xnew = np.linspace(min(x), max(x), npts)
+    fint = interp1d(x, y, kind=kind, fill_value="extrapolate")
+    return xnew, fint(xnew) 

@@ -5,8 +5,43 @@ import numpy as np
 from lmfit.models import PolynomialModel
 import statsmodels.api as sm
 from lmfit import Model
-from .peaks import gaussian, lorentzian, voigt, guess_peak_width
-from .array_help import copy_range_array
+from lmfit.models import ConstantModel, LorentzianModel, GaussianModel, PseudoVoigtModel
+from .peaks import gaussian, lorentzian, voigt, guess_peak_width, lorentzian_d, lorentzian_dd, gaussian_d, gaussian_dd
+from .array_help import copy_range_array, find_nearest_index, copy_range
+
+def fit_peaks(x, y, peak_pos, bg='constant', sigma_guess=2, center_pm=20, sigma_min=0.5, amplitude_max_m=3.0, bg_pm=100):
+    mod = ConstantModel()
+
+    for i, p in enumerate(peak_pos):
+        mod += LorentzianModel(prefix='p%s_' % i)
+    
+    pars = mod.make_params()
+
+    for i, p in enumerate(peak_pos):
+        pars['p%s_center' % i].set(p, min=p-center_pm, max=p+center_pm)
+        pars['p%s_sigma' % i].set(sigma_guess, min=sigma_min)
+        #pars['p%s_amplitude' % i].set(10**2, min=0.0)
+        pars['p%s_amplitude' % i].set(amplitude_max_m*y[find_nearest_index(x, p)], min=0.0)
+
+    pars['c'].set(0, min=-1*bg_pm, max=bg_pm)
+    
+    out = mod.fit(y, pars, x=x, method='leastsq')
+    out.peak_pos = peak_pos
+    return out
+
+def split_and_fit(x, y, sub_ranges, all_peaks_ind):
+    """
+    Split data into regions and fit subsets
+    """
+    out_list = []
+    for xmin, xmax in sub_ranges:
+        print("Fitting between range {0} and {1}".format(xmin, xmax))
+        xt, yt = copy_range(x, y, xmin, xmax)
+        sub_set = [x[p] for p in all_peaks_ind if x[p] > xmin and x[p] < xmax]
+        print("Peaks in this range are at: {0}".format(sub_set))
+        out = fit_peaks(xt, yt, sub_set)
+        out_list.append(out)
+    return out_list
 
 def fit_data(x, y, peak_pos, peak_type='LO', width=None):
     """ 
@@ -157,6 +192,22 @@ def output_results(fit_model, filename=None, pandas=False):
     else:
         return output_np
 
+def fit_peak_table(out_list):
+    outf = "num,center,c_err,height,h_err,fwhm,f_err\n"
+    peak_num = 1
+    for o in out_list:
+        for i in range(len(o.peak_pos)):
+            outf += str(peak_num)  + ','
+            outf += str(o.params['p%s_center' % i].value) + ','
+            outf += str(o.params['p%s_center' % i].stderr) + ','
+            outf += str(o.params['p%s_height' % i].value) + ','
+            outf += str(o.params['p%s_height' % i].stderr) + ','
+            outf += str(o.params['p%s_fwhm' % i].value) + ','
+            outf += str(o.params['p%s_fwhm' % i].stderr) + '\n'
+            peak_num += 1
+    return outf
+            
+
 def batch_fit_single_peak(x, y, xlow, xhigh):
     """
     Batch fit a single peak
@@ -268,3 +319,90 @@ def poly_fit(x, y, order=1, err=None):
     else:
         mod = sm.WLS(y, X, weights=1./(err**2))
     return mod.fit()
+
+
+def build_model(bg_ord=1, peak_num=1, peak_type='lorentzian'):
+    model = PolynomialModel(bg_ord, prefix='bg_')
+
+    peak_str = peak_type.lower()[:2]
+
+    if peak_str == 'lo':
+        peak_function = lorentzian
+    elif peak_str == 'ga':
+        peak_function = gaussian
+    elif peak_str == 'vo' or peak_type == 'ps':
+        peak_function = voigt
+    else:
+        print("'peak_type' should be one of 'lorentzian', 'gaussian' or 'pseudo-voight'")
+        return
+
+    for i in range(peak_num):
+        model += Model(peak_function, prefix='p%s_' % i)
+        
+        
+    params = model.make_params()
+    return model, params
+
+def set_parameters(par, peak_centers, center_s=np.inf, fwhm=1, fwhm_max=np.inf, amp=1, amp_max=np.inf):
+    for p in par:
+        if p.startswith('bg'):
+            par[p].set(0e0, min=-1e9, max=1e9)
+        if p.endswith('fwhm'):
+            par[p].set(fwhm, min=0.1, max=fwhm_max)
+        if p.endswith('amp'):
+            par[p].set(amp, min=0.1, max=amp_max)
+
+    peak_center_names = sorted([p for p in par if p.endswith('x0')])
+    if len(peak_center_names) != len(peak_centers):
+        print("Need centers for each peak")
+        
+    for pc, pcn in zip(peak_centers,  peak_center_names):
+        par[pcn].set(pc, min=(pc - center_s), max=(pc + center_s))
+        
+    return par
+
+
+def build_model_d(bg_ord=1, peak_num=1, peak_type='lorentzian'):
+    model = PolynomialModel(bg_ord, prefix='bg_')
+
+    peak_str = peak_type.lower()[:2]
+
+    if peak_str == 'lo':
+        peak_function = lorentzian_d
+    elif peak_str == 'ga':
+        peak_function = gaussian_d
+    elif peak_str == 'vo' or peak_type == 'ps':
+        peak_function = voigt
+    else:
+        print("'peak_type' should be one of 'lorentzian', 'gaussian' or 'pseudo-voight'")
+        return
+
+    for i in range(peak_num):
+        model += Model(peak_function, prefix='p%s_' % i)
+        
+        
+    params = model.make_params()
+    return model, params
+
+
+def build_model_dd(bg_ord=1, peak_num=1, peak_type='lorentzian'):
+    model = PolynomialModel(bg_ord, prefix='bg_')
+
+    peak_str = peak_type.lower()[:2]
+
+    if peak_str == 'lo':
+        peak_function = lorentzian_dd
+    elif peak_str == 'ga':
+        peak_function = gaussian_dd
+    elif peak_str == 'vo' or peak_type == 'ps':
+        peak_function = voigt
+    else:
+        print("'peak_type' should be one of 'lorentzian', 'gaussian' or 'pseudo-voight'")
+        return
+
+    for i in range(peak_num):
+        model += Model(peak_function, prefix='p%s_' % i)
+        
+        
+    params = model.make_params()
+    return model, params

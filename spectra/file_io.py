@@ -1,6 +1,7 @@
 import os
 import re
 import numpy as np
+import json
 
 def path(*args):
     """
@@ -12,6 +13,16 @@ def path(*args):
     """
     return os.path.join(os.path.expanduser('~'), *args)
 
+def rpath(*args):
+    """
+    Return path relative to current working directory
+
+    Parameters
+    ----------
+    Comma separated directories
+    """
+    return os.path.join(os.getcwd(), *args)
+
 def assure_path_exists(path):
     """
     Create directory structure of file if it doens't already exist
@@ -19,6 +30,20 @@ def assure_path_exists(path):
     dir = os.path.dirname(path)
     if not os.path.exists(dir):
         os.makedirs(dir)
+    return os.path.abspath(path)
+
+    
+def make_fname(fol_name, fil_name, extension):
+    """
+    Make a path from a folder name, filename and extension
+    If the filename already has an extension it will be stripped off
+    If the folder name doesn't exist, it will be created
+    """
+    path = os.path.join(os.getcwd(), fol_name, '%s.%s' % (os.path.splitext(fil_name)[0], extension))
+    direct = os.path.dirname(path)
+    if not os.path.exists(direct):
+        os.makedirs(direct)
+    return path
 
 def write2col(fname, x, y, delim='\t'):
     """
@@ -211,3 +236,14 @@ def list_all_files(base_dir, extension='csv'):
                 fname = os.path.join(root, name)
                 files.append(fname)
     return files
+
+
+def write_json(data_file, arb_data):
+    with open(data_file, 'w') as dump:
+        dump.write(json.dumps(arb_data, indent=0))
+
+
+def read_json(data_file):
+    source = open(data_file, 'r').read()
+    data = json.loads(source)
+    return data

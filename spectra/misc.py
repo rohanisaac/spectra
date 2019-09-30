@@ -29,9 +29,8 @@ def generate_spectrum(wavelengths, peak_pos, peak_amp, width=5):
     """Generate a simulated spectrum using Lorentzian functions of width over
     the with peak positions and peak amplitudes"""
     y = np.zeros(len(wavelengths))
-    y_blank = np.zeros(len(wavelengths))
     for p, a in zip(peak_pos, peak_amp):
-        y += lorentzian(y_blank, a, p, width)
+        y += lorentzian(wavelengths, p, a, width)
     return y
 
 
@@ -59,3 +58,21 @@ def find_common(sub_list, full_list, peak_range):
                 com_sub.append(sub)
                 com_full.append(full)
     return com_sub, com_full
+
+
+def remove_absorption_jumps(y, thres=0.05, only_350=False):
+    """
+    Remove absorption jumps from high wavelength to low wavelenth, assuming sharp jumps are errors
+    """
+    
+    # Find jumps
+    if only_350:
+        ydf = np.diff(y)
+        print("Removing Single Jumps at 350")
+        ydf[451] = 0
+        return np.cumsum(np.insert(ydf, 0, y[0]))
+    else:
+        ydf = np.diff(y)
+        print("Jumps at %s places" % np.sum(np.abs(ydf) > thres))
+        ydf[np.abs(ydf) > thres] = 0
+        return np.cumsum(np.insert(ydf, 0, y[0]))

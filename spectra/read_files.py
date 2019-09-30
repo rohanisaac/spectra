@@ -103,3 +103,11 @@ def read_horiba(file, x='wn'):
     else:
         xl = x
     return np.genfromtxt(file, delimiter='\t', names=[xl, 'Intensity'])
+
+
+@data_details
+def read_renishaw(file):
+    """
+    Read text file created by Renishaw WIRE software
+    """
+    return np.genfromtxt(file, delimiter='\t', names=['Wavenumber', 'Intensity'], skip_header=1)

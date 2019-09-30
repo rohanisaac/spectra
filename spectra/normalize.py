@@ -64,6 +64,7 @@ def normalize_msc(dat):
     # find the mean to use as a reference
     one = np.zeros(spectrum)
     r = np.mean(dat, axis=0)
+    print("Mean shape", r.shape)
     rc = r - np.mean(r) * one
     rcl = np.dot(rc, rc)
 
@@ -118,6 +119,7 @@ def normalize_pq(dat):
 
     # find the meadian to use as a reference
     mead_spec = np.median(int_norm, axis=0)
+    print("Median shape", mead_spec.shape)
 
     for i in range(sample):
         # find quotients
@@ -129,10 +131,25 @@ def normalize_pq(dat):
 
 def normalize_2pt(x, y, xmin, xmax, ymin=0, ymax=1):
     """
-    Normalize a spectrum to two points, not very rigorous
+    Normalize a spectrum, setting the y-values at two specific points to specific values (defaults to 0 and 1)
+
+    Notes: not very rigorous
     """
+
     xmini = find_nearest_index(x, xmin)
     xmaxi = find_nearest_index(x, xmax)
+
+    # scale to 0 to 1
     y_floor = y - y[xmini]
-    y_norm = y_floor/y_floor[xmaxi]
-    return x, y_norm
+    y_norm = y_floor / y_floor[xmaxi]
+
+    # add real scale
+    return x, ((ymax-ymin)*y_norm + ymin)
+
+
+def normalize_fs(y):
+    """
+    Scale between 0 and 1
+    """
+    ys = y - np.min(y)
+    return ys/np.max(ys)

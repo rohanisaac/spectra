@@ -150,3 +150,31 @@ def find_fwhm(x, y, position):
     return fwhm
 
 
+def lorentzian_d(x, x0, amp, fwhm):
+    """
+    Derivative of a lorentizian define above
+    """
+    return -8 * amp (x-x0)/ (fwhm * (1 + (2(x-x0)/fwhm)**2))**2
+
+def lorentzian_dd(x, x0, amp, fwhm):
+    """
+    Second derivative of lorentzian defined above
+    """
+    a = -8 * amp / (fwhm * (1 + (2(x-x0)/fwhm)**2))**2
+    b = -128 * amp (x-x0)**2 / (fwhm**4 * (1 + (2(x-x0)/fwhm)**2)**3)
+    return a + b
+
+
+def gaussian_d(x, x0, amp, fwhm):
+    """
+    Derivative of the gaussian function defined above
+    """
+    return -8 * log(2) * amp * (x-x0) * exp(-log(2)*(2*(x-x0)/fwhm)**2)  /  fwhm**2
+
+def gaussian_dd(x, x0, amp, fwhm):
+    """
+    Second derivative of the gaussian defined above
+    """
+    a = -8 * log(2) * amp * exp(-log(2)*(2*(x-x0)/fwhm)**2)  /  fwhm**2
+    b =  (8 * log(2) * (x-x0)/ fwhm**2)**2 * amp * exp(-log(2)*(2*(x-x0)/fwhm)**2) 
+    return a + b
