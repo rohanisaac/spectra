@@ -24,14 +24,17 @@ def print_peak_results(self):
     and FWHM
     """
     params = self.out.params
-    print('\tPosition\tHeight\tFWHM')
+    print("\tPosition\tHeight\tFWHM")
     for p in range(self.num_peaks):
-        center = ufloat(params['p%s_center' % p].value, params['p%s_center' % p].stderr)
-        amplitude = ufloat(params['p%s_amplitude' % p].value, params['p%s_amplitude' % p].stderr)
-        sigma = ufloat(params['p%s_sigma' % p].value, params['p%s_sigma' % p].stderr)
+        center = ufloat(params["p%s_center" % p].value, params["p%s_center" % p].stderr)
+        amplitude = ufloat(
+            params["p%s_amplitude" % p].value, params["p%s_amplitude" % p].stderr
+        )
+        sigma = ufloat(params["p%s_sigma" % p].value, params["p%s_sigma" % p].stderr)
         height = self.height(amplitude, sigma)
         fwhm = self.fwhm(sigma)
-        print('Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm))
+        print("Peak%s\t%s\t%s\t%s" % (p, center, height, fwhm))
+
 
 def guess_peak_width(self, max_width=None):
     """ Find an initial guess for the peak with of the data imported,
@@ -68,11 +71,13 @@ def guess_peak_width(self, max_width=None):
     print("Peak width of about %s (in x-data units)" % self.test_peak_width)
     return self.data_max, self.data_max_pos, self.test_peak_width
 
+
 def set_peak_width(self, width):
     """
     Sets peak width
     """
     self.test_peak_width = width
+
 
 def find_fwhm(self, position):
     """ Find the fwhm of a point using a very simplistic algorithm.
@@ -96,9 +101,9 @@ def find_fwhm(self, position):
     # change max_width to function of data set
 
     # make sure index does not get out of bounds
-    while (self.y[left] > half_max and left > 0):
+    while self.y[left] > half_max and left > 0:
         left = left - 1
-    while (self.y[right] > half_max and right < (self.num_points - 1)):
+    while self.y[right] > half_max and right < (self.num_points - 1):
         right = right + 1
 
     # left = find index to left when height is below half_max
@@ -107,6 +112,7 @@ def find_fwhm(self, position):
     fwhm = self.x[right] - self.x[left]
 
     return fwhm
+
 
 def filter_high_freq(self, cof=5):
     """ Filter high frequency y-data using 1-D fft
@@ -119,6 +125,7 @@ def filter_high_freq(self, cof=5):
     """
     pass
 
+
 def calibrate_x(self, m, b):
     """ Applies a linear correction to the x-values """
     # Need to change the active data set
@@ -126,11 +133,13 @@ def calibrate_x(self, m, b):
 
     pass
 
+
 def reset(self):
     """
     Reset the y data to the original value
     """
     self.y = self.y_bak
+
 
 def height(self, amplitude, sigma):
     """
@@ -143,6 +152,7 @@ def height(self, amplitude, sigma):
     """
     return amplitude / (sigma * self.afactor)
 
+
 def amplitude(self, height, sigma):
     """
     Converts amplitude to height
@@ -153,6 +163,7 @@ def amplitude(self, height, sigma):
     voigt: sqrt(2*pi)
     """
     return height * (sigma * self.afactor)
+
 
 def fwhm(self, sigma):
     """

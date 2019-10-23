@@ -6,12 +6,13 @@ NOTE: filename not named array.py
 
 import numpy as np
 
+
 def find_nearest(array, value):
     """
     Returns the position(s) of the point(s) in the list closes to the
     passed point
     """
-    idx = (np.abs(array-value)).argmin()
+    idx = (np.abs(array - value)).argmin()
     return array[idx]
 
 
@@ -20,7 +21,7 @@ def find_nearest_index(array, value):
     Returns the position(s) of the point(s) in the list closes to the
     passed point
     """
-    return (np.abs(array-value)).argmin()
+    return (np.abs(array - value)).argmin()
 
 
 # copy range from x,y data based on x values
@@ -38,6 +39,7 @@ def copy_range(x, y, xmin, xmax):
     else:
         print("Error, no subrange")
 
+
 def copy_range_array(x, y, xmin, xmax):
     """
     Copy range from x,y data based on x values, but here x and y are both arrays
@@ -53,6 +55,7 @@ def copy_range_array(x, y, xmin, xmax):
     else:
         print("Error, no subrange")
 
+
 def copy_range_yarray(x0, y, xmin, xmax):
     """
     Copy range from x,y data based on x values, but here x and y are both arrays
@@ -66,6 +69,7 @@ def copy_range_yarray(x0, y, xmin, xmax):
         return x0[r2:r1], y[:, r2:r1]
     else:
         print("Error, no subrange")
+
 
 def sort_by_list(names, x, y):
     """
@@ -88,11 +92,12 @@ def find_nearest_tolerance(value, array, tolerance=10):
     Returns nearest value in the list if it falls within a tolerance,
     none otherwise
     """
-    idx = (np.abs(array-value)).argmin()
-    if np.abs(array[idx]-value) <= tolerance:
+    idx = (np.abs(array - value)).argmin()
+    if np.abs(array[idx] - value) <= tolerance:
         return array[idx]
     else:
         return None
+
 
 def sort_array_column(a, c=0):
     """
@@ -107,7 +112,7 @@ def sort_array_column(a, c=0):
     -------
     Sorted array of same shape
     """
-    return a[a[:,c].argsort(kind='mergesort')]
+    return a[a[:, c].argsort(kind="mergesort")]
 
 
 def split_columns(a):

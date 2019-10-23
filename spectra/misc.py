@@ -1,10 +1,10 @@
-
 import numpy as np
 from scipy.constants import h, c, k
 from .peaks import lorentzian
 
-A1 = (2 * np.pi**2 / 45) * (h / c)
+A1 = (2 * np.pi ** 2 / 45) * (h / c)
 A2 = -1 * h * c / k
+
 
 def crop(self, xmin, xmax):
     """
@@ -25,12 +25,12 @@ def crop(self, xmin, xmax):
         print("Error, no subrange")
 
 
-def generate_spectrum(wavelengths, peak_pos, peak_amp, width=5):
+def generate_spectrum(wavelengths, peak_pos, peak_amp, peak_width):
     """Generate a simulated spectrum using Lorentzian functions of width over
     the with peak positions and peak amplitudes"""
     y = np.zeros(len(wavelengths))
-    for p, a in zip(peak_pos, peak_amp):
-        y += lorentzian(wavelengths, p, a, width)
+    for p, a, w in zip(peak_pos, peak_amp, peak_width):
+        y += lorentzian(wavelengths, p, a, w)
     return y
 
 
@@ -38,7 +38,7 @@ def activity_to_intensity(S, v0, v, T):
     """
     From Polavarapu et al. 1990
     """
-    return A1 * (v0 - v)**4 * S / (v * (1 - np.exp(A2 * v / T)))
+    return A1 * (v0 - v) ** 4 * S / (v * (1 - np.exp(A2 * v / T)))
 
 
 def find_common(sub_list, full_list, peak_range):
@@ -64,7 +64,7 @@ def remove_absorption_jumps(y, thres=0.05, only_350=False):
     """
     Remove absorption jumps from high wavelength to low wavelenth, assuming sharp jumps are errors
     """
-    
+
     # Find jumps
     if only_350:
         ydf = np.diff(y)

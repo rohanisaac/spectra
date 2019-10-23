@@ -6,6 +6,7 @@ from scipy import signal
 from scipy.interpolate import interp1d
 import numpy as np
 
+
 def smooth_data(y, window_size=None, order=2):
     """
     Smooths data using the Savitzy Golay filter
@@ -13,8 +14,9 @@ def smooth_data(y, window_size=None, order=2):
     """
     if window_size is None:
         # needs to be odd
-        window_size = int(len(y)/25)*2 + 1
+        window_size = int(len(y) / 25) * 2 + 1
     return signal.savgol_filter(y, window_size, order)
+
 
 def butter_lp_filter(self, cutoff=None, order=2):
     """
@@ -35,14 +37,14 @@ def butter_lp_filter(self, cutoff=None, order=2):
     """
     if cutoff is None:
         cutoff = 2 / len(self.y)
-    B, A = signal.butter(order, cutoff, output='ba')
+    B, A = signal.butter(order, cutoff, output="ba")
     return signal.filtfilt(B, A, self.y)
 
 
 def butter_lowpass(cutoff, fs, order=5):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
-    b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
+    b, a = signal.butter(order, normal_cutoff, btype="low", analog=False)
     return b, a
 
 
@@ -66,6 +68,7 @@ def butter_lowpass_filter(data, cutoff, fs, order=5):
     y = signal.lfilter(b, a, data)
     return y
 
+
 ## Use digital filter, regularly sampled data
 #
 def wicker():
@@ -76,9 +79,11 @@ def savgol_filter():
     """Just use scipy"""
     pass
 
+
 # https://github.com/scipy/scipy-cookbook/blob/master/ipython/ButterworthBandpass.ipynb
 def butterworth_bandpass(b, a, data):
     return y
+
 
 """
 ## for fitting sin's gaussian etc:
@@ -124,7 +129,8 @@ plt.figure(2)
 plt.plot(wave, dtst, 'r-', wave, dtstfilt, 'k-')
 """
 
-def resample(x, y, npts, kind='linear'):
+
+def resample(x, y, npts, kind="linear"):
     xnew = np.linspace(min(x), max(x), npts)
     fint = interp1d(x, y, kind=kind, fill_value="extrapolate")
-    return xnew, fint(xnew) 
+    return xnew, fint(xnew)

@@ -100,15 +100,15 @@ class Spectra:
         start_pos = 0
         end_pos = 0
         dat_read = False  # has data been read
-        header = ''
+        header = ""
 
-        with open(file_name, 'rb') as fil:
+        with open(file_name, "rb") as fil:
             # find header and footer positions
             for lin in fil:
                 line_pos += 1
                 # if line contains any of the alphabet (except e for exponents,
                 # not data)
-                if re.search('[a-df-zA-DF-Z]', lin):
+                if re.search("[a-df-zA-DF-Z]", lin):
                     if not dat_read:
                         # before data has been read, set start of data pos
                         start_pos = line_pos
@@ -121,10 +121,10 @@ class Spectra:
                 # if data line and data has not been read
                 elif not dat_read:
                     # find seperator
-                    if re.search('\t', lin):
-                        sep_char = '\t'
-                    elif re.search(',', lin):
-                        sep_char = ','
+                    if re.search("\t", lin):
+                        sep_char = "\t"
+                    elif re.search(",", lin):
+                        sep_char = ","
                     else:
                         print("Unknown separator character")
                     # now we know what separator is for the data
@@ -141,7 +141,7 @@ class Spectra:
             # if we did compute it
             skip_foot = line_pos - end_pos
 
-        xlab, ylab = ('', '')
+        xlab, ylab = ("", "")
         # find header row if exists
         header_lst = header.split(sep_char)
         # print headerlst
@@ -150,8 +150,8 @@ class Spectra:
 
         # attempt to load into numpy array, see what happens
         fdat = np.genfromtxt(
-            file_name, delimiter=sep_char, skip_header=start_pos,
-            skip_footer=skip_foot)
+            file_name, delimiter=sep_char, skip_header=start_pos, skip_footer=skip_foot
+        )
 
         if headers:
             return fdat[:, 0], fdat[:, 1], xlab, ylab
@@ -181,7 +181,7 @@ class Spectra:
         """
         if cutoff is None:
             cutoff = 2 / len(self.y)
-        B, A = signal.butter(order, cutoff, output='ba')
+        B, A = signal.butter(order, cutoff, output="ba")
         return signal.filtfilt(B, A, self.y)
 
     def find_background(self, cutoff=None, order=2):
@@ -213,8 +213,7 @@ class Spectra:
         print("Subtracting background ... ")
         self.y = self.y - self.bg
 
-    def find_peaks(self, width=None, w_range=5, threshold=5, limit=20,
-                   smooth=False):
+    def find_peaks(self, width=None, w_range=5, threshold=5, limit=20, smooth=False):
         """ Find peaks in active data set using continuous wavelet
         transformation
 
@@ -270,16 +269,19 @@ class Spectra:
         print("Found %s peaks at %s" % (len(peak_pos), peak_pos))
 
         # remove peaks that are not above the threshold.
-        peak_pos = [i for i in peak_pos if
-                    (y[i] / self.data_max) > (threshold / 100)]
+        peak_pos = [i for i in peak_pos if (y[i] / self.data_max) > (threshold / 100)]
 
-        print("After filtering out peaks below ", threshold, \
-            "percent, we have ", len(peak_pos), " peaks.")
+        print(
+            "After filtering out peaks below ",
+            threshold,
+            "percent, we have ",
+            len(peak_pos),
+            " peaks.",
+        )
 
         # only use the most intense peaks, zip two lists together,
         # make the y-values as the first item, and sort by it (descending)
-        peak_pos = [y1 for (x1, y1) in sorted(zip(y[peak_pos], peak_pos),
-                                              reverse=True)]
+        peak_pos = [y1 for (x1, y1) in sorted(zip(y[peak_pos], peak_pos), reverse=True)]
 
         self.peak_pos = sorted(peak_pos[0:limit])
         self.num_peaks = len(self.peak_pos)
@@ -287,7 +289,7 @@ class Spectra:
         print("Using ", self.num_peaks, " peaks at ", self.peak_pos)
         return self.num_peaks, self.peak_pos
 
-    def build_model(self, peak_type='LO', max_width=None, bg_ord=2):
+    def build_model(self, peak_type="LO", max_width=None, bg_ord=2):
         """ Builds a lmfit model of peaks in listed by index in `peak_pos`
         Uses some basic algorithms to determine initial parameters for
         amplitude and fwhm (limit on fwhm to avoid fitting background as peaks)
@@ -322,40 +324,40 @@ class Spectra:
 
         # start with polynomial background
         # second order
-        model = PolynomialModel(bg_ord, prefix='bg_')
+        model = PolynomialModel(bg_ord, prefix="bg_")
         pars = model.make_params()
 
-        if peak_type == 'LO':
+        if peak_type == "LO":
             peak_function = lorentzian
             self.afactor = pi
             self.wfactor = 2.0
-        elif peak_type == 'GA':
+        elif peak_type == "GA":
             peak_function = gaussian
             self.afactor = sqrt(2 * pi)
             self.wfactor = 2.354820
-        elif peak_type == 'VO':
+        elif peak_type == "VO":
             peak_function = voigt
             self.afactor = sqrt(2 * pi)
             self.wfactor = 3.60131
 
         # add lorentizian peak for all peaks
         for i, peak in enumerate(peak_guess):
-            temp_model = Model(peak_function, prefix='p%s_' % i)
+            temp_model = Model(peak_function, prefix="p%s_" % i)
             pars.update(temp_model.make_params())
             model += temp_model
 
         # set inital background as flat line at zeros
         for i in range(bg_ord + 1):
-            pars['bg_c%i' % i].set(0)
+            pars["bg_c%i" % i].set(0)
 
         # give values for other peaks
         for i, peak in enumerate(self.peak_pos):
-            print('Peak %i: pos %s, height %s' % (i, x[peak], y[peak]))
+            print("Peak %i: pos %s, height %s" % (i, x[peak], y[peak]))
             # could set bounds #, min=x[peak]-5, max=x[peak]+5)
-            pars['p%s_center' % i].set(x[peak])
-            pars['p%s_sigma' % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
+            pars["p%s_center" % i].set(x[peak])
+            pars["p%s_sigma" % i].set(pw / 2, min=pw * 0.25, max=pw * 2)
             # here as well #, min=0, max=2*max(y))
-            pars['p%s_amplitude' % i].set(self.amplitude(y[peak], (pw / 2)))
+            pars["p%s_amplitude" % i].set(self.amplitude(y[peak], (pw / 2)))
 
         self.pars = pars
         self.model = model
@@ -394,21 +396,24 @@ class Spectra:
         # notes -- need to make output model accurate
 
         params = self.out.params
-        dat_out = ''
+        dat_out = ""
         for name in list(params.keys()):
             par = params[name]
-            dat_out += '%s\t%s\t%s\n' % (name, par.value, par.stderr)
+            dat_out += "%s\t%s\t%s\n" % (name, par.value, par.stderr)
         # print dat_out
         if filename:
-            with open(filename, 'w') as f:
+            with open(filename, "w") as f:
                 f.write(dat_out)
         if pandas:
             from io import StringIO
-            all_data = pd.read_csv(StringIO(str(dat_out)),
-                                   delimiter='\t',
-                                   header=None,
-                                   index_col=0,
-                                   names=['value', 'stderr'])
+
+            all_data = pd.read_csv(
+                StringIO(str(dat_out)),
+                delimiter="\t",
+                header=None,
+                index_col=0,
+                names=["value", "stderr"],
+            )
             return all_data
         else:
             return dat_out
@@ -422,14 +427,20 @@ class Spectra:
         and FWHM
         """
         params = self.out.params
-        print('\tPosition\tHeight\tFWHM')
+        print("\tPosition\tHeight\tFWHM")
         for p in range(self.num_peaks):
-            center = ufloat(params['p%s_center' % p].value, params['p%s_center' % p].stderr)
-            amplitude = ufloat(params['p%s_amplitude' % p].value, params['p%s_amplitude' % p].stderr)
-            sigma = ufloat(params['p%s_sigma' % p].value, params['p%s_sigma' % p].stderr)
+            center = ufloat(
+                params["p%s_center" % p].value, params["p%s_center" % p].stderr
+            )
+            amplitude = ufloat(
+                params["p%s_amplitude" % p].value, params["p%s_amplitude" % p].stderr
+            )
+            sigma = ufloat(
+                params["p%s_sigma" % p].value, params["p%s_sigma" % p].stderr
+            )
             height = self.height(amplitude, sigma)
             fwhm = self.fwhm(sigma)
-            print('Peak%s\t%s\t%s\t%s' % (p, center, height, fwhm))
+            print("Peak%s\t%s\t%s\t%s" % (p, center, height, fwhm))
 
     def crop(self, xmin, xmax):
         """
@@ -512,9 +523,9 @@ class Spectra:
         # change max_width to function of data set
 
         # make sure index does not get out of bounds
-        while (self.y[left] > half_max and left > 0):
+        while self.y[left] > half_max and left > 0:
             left = left - 1
-        while (self.y[right] > half_max and right < (self.num_points - 1)):
+        while self.y[right] > half_max and right < (self.num_points - 1):
             right = right + 1
 
         # left = find index to left when height is below half_max

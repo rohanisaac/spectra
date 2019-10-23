@@ -3,21 +3,27 @@ File loaders for common text based file formats. Importing them into a standard 
 No other details are saved
 """
 import numpy as np
-# 
+
+#
 # Helper functions
 #
+
 
 def data_details(f):
     """
     Return column names and data size of array of a function returning a single numpy array
     """
+
     def wrapped(*args, **kwargs):
         dat = f(*args, **kwargs)
         print(dat.dtype.names, dat.shape)
         return dat
+
     return wrapped
 
+
 # Loaders
+
 
 @data_details
 def read_cary(file):
@@ -34,19 +40,27 @@ def read_cary(file):
     with open(file) as f:
         for i, l in enumerate(f):
             # extract relevant column headers
-            if i==0:
-                samples = l.split(',')
-            elif i==1:
-                columns = l.split(',')
+            if i == 0:
+                samples = l.split(",")
+            elif i == 1:
+                columns = l.split(",")
             # stop reading when hit a blank line
-            elif l in ['\n', '\r\n']:
+            elif l in ["\n", "\r\n"]:
                 break
     # the last column is blank
     ncols = len(columns) - 1
     # don't need to keep the wavelength, it is the same for all of them, just keep one copy
     usecols = [0] + list(range(1, ncols, 2))
     names = [columns[0]] + samples[:ncols:2]
-    return np.genfromtxt(file, delimiter=',', skip_header=2, max_rows=(i-2), usecols=usecols, names=names)
+    return np.genfromtxt(
+        file,
+        delimiter=",",
+        skip_header=2,
+        max_rows=(i - 2),
+        usecols=usecols,
+        names=names,
+    )
+
 
 @data_details
 def read_craic(file):
@@ -63,12 +77,15 @@ def read_craic(file):
     with open(file) as f:
         for i, l in enumerate(f):
             # extract relevant column headers
-            if i==2:
-                columns = l.split(',')
+            if i == 2:
+                columns = l.split(",")
             # stop reading when hit a blank line
-            elif l in ['\n', '\r\n']:
+            elif l in ["\n", "\r\n"]:
                 break
-    return np.genfromtxt(file, delimiter=',', skip_header=9, names=['Wavelength', columns[0]])
+    return np.genfromtxt(
+        file, delimiter=",", skip_header=9, names=["Wavelength", columns[0]]
+    )
+
 
 @data_details
 def read_nicolet(file):
@@ -82,10 +99,11 @@ def read_nicolet(file):
         Full path to the file to open (relative/absolute)
     
     """
-    return np.genfromtxt(file, delimiter=',', names=['Wavenumber', 'Absorbance'])
+    return np.genfromtxt(file, delimiter=",", names=["Wavenumber", "Absorbance"])
+
 
 @data_details
-def read_horiba(file, x='wn'):
+def read_horiba(file, x="wn"):
     """
     Read text file created by Horiba LabSpec software and return a single numpy array with the data and
     column labels
@@ -96,13 +114,13 @@ def read_horiba(file, x='wn'):
         Full path to the file to open (relative/absolute)
     
     """
-    if x is 'wn':
-        xl = 'Relative_Wavenumber'
-    elif x is 'nm':
-        xl = 'Wavelength_nm'
+    if x is "wn":
+        xl = "Relative_Wavenumber"
+    elif x is "nm":
+        xl = "Wavelength_nm"
     else:
         xl = x
-    return np.genfromtxt(file, delimiter='\t', names=[xl, 'Intensity'])
+    return np.genfromtxt(file, delimiter="\t", names=[xl, "Intensity"])
 
 
 @data_details
@@ -110,4 +128,6 @@ def read_renishaw(file):
     """
     Read text file created by Renishaw WIRE software
     """
-    return np.genfromtxt(file, delimiter='\t', names=['Wavenumber', 'Intensity'], skip_header=1)
+    return np.genfromtxt(
+        file, delimiter="\t", names=["Wavenumber", "Intensity"], skip_header=1
+    )

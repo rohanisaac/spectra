@@ -1,7 +1,7 @@
-
 import numpy as np
 from scipy import signal
 from numpy import log, exp
+
 
 def find_peaks(x, y, width=5, threshold=5, limit=20):
     """
@@ -37,18 +37,35 @@ def find_peaks(x, y, width=5, threshold=5, limit=20):
 
     data_max = np.max(y)
     # remove peaks that are not above the threshold.
-    peak_pos = [i for i in peak_pos if
-                (y[i] / data_max) > (threshold / 100)]
-
+    peak_pos = [i for i in peak_pos if (y[i] / data_max) > (threshold / 100)]
 
     # only use the most intense peaks, zip two lists together,
     # make the y-values as the first item, and sort by it (descending)
-    peak_pos = [yval for (index, yval) in sorted(zip(y[peak_pos], peak_pos),
-                                                 reverse=True)]
+    peak_pos = [
+        yval for (index, yval) in sorted(zip(y[peak_pos], peak_pos), reverse=True)
+    ]
 
     peak_pos = sorted(peak_pos[0:limit])
 
     return peak_pos
+
+
+def find_peaks_pu(x, y, thres=0.05, min_dist=10, index=False, integers=True):
+    """
+    Find peaks using peakutils. Return the approximate position in xvalues (closest int)
+    Can return indexes by passing index=True
+    """
+    import peakutils as pu
+
+    p_ind = pu.indexes(y, thres=thres, min_dist=min_dist)
+    if index:
+        return p_ind
+    else:
+        if integers:
+            p_pos = sorted([int(x[i]) for i in p_ind])
+        else:
+            p_pos = sorted([x[i] for i in p_ind])
+        return p_pos
 
 
 def gaussian(x, x0, amp, fwhm):
@@ -58,7 +75,7 @@ def gaussian(x, x0, amp, fwhm):
     x0: Peak center
     fwhm: Full width at half maximum
     """
-    return amp*(exp(-4*log(2) * ((x-x0)/fwhm)**2))
+    return amp * (exp(-4 * log(2) * ((x - x0) / fwhm) ** 2))
 
 
 def lorentzian(x, x0, amp, fwhm):
@@ -68,7 +85,7 @@ def lorentzian(x, x0, amp, fwhm):
     x0: Peak center
     fwhm: Full width at half maximum
     """
-    return amp/(1+(2*(x-x0)/fwhm)**2)
+    return amp / (1 + (2 * (x - x0) / fwhm) ** 2)
 
 
 def voigt(x, x0, amp, fwhm, alpha=0.5):
@@ -79,8 +96,10 @@ def voigt(x, x0, amp, fwhm, alpha=0.5):
     fwhm: Full width at half maximum
     alpha: fraction lorentzian (1-fraction gaussian)
     """
-    return ((1 - alpha)*gaussian(x, x0, amp, fwhm) +
-            alpha*lorentzian(x, x0, amp, fwhm))
+    return (1 - alpha) * gaussian(x, x0, amp, fwhm) + alpha * lorentzian(
+        x, x0, amp, fwhm
+    )
+
 
 def guess_peak_width(x, y, max_width=None):
     """ Find an initial guess for the peak with of the data imported,
@@ -115,6 +134,7 @@ def guess_peak_width(x, y, max_width=None):
 
     return test_peak_width
 
+
 def find_fwhm(x, y, position):
     """ Find the fwhm of a point using a very simplistic algorithm.
     Could return very large width.
@@ -137,9 +157,9 @@ def find_fwhm(x, y, position):
     # change max_width to function of data set
 
     # make sure index does not get out of bounds
-    while (y[left] > half_max and left > 0):
+    while y[left] > half_max and left > 0:
         left = left - 1
-    while (y[right] > half_max and right < (len(y) - 1)):
+    while y[right] > half_max and right < (len(y) - 1):
         right = right + 1
 
     # left = find index to left when height is below half_max
@@ -154,14 +174,15 @@ def lorentzian_d(x, x0, amp, fwhm):
     """
     Derivative of a lorentizian define above
     """
-    return -8 * amp (x-x0)/ (fwhm * (1 + (2(x-x0)/fwhm)**2))**2
+    return -8 * amp(x - x0) / (fwhm * (1 + (2(x - x0) / fwhm) ** 2)) ** 2
+
 
 def lorentzian_dd(x, x0, amp, fwhm):
     """
     Second derivative of lorentzian defined above
     """
-    a = -8 * amp / (fwhm * (1 + (2(x-x0)/fwhm)**2))**2
-    b = -128 * amp (x-x0)**2 / (fwhm**4 * (1 + (2(x-x0)/fwhm)**2)**3)
+    a = -8 * amp / (fwhm * (1 + (2 * (x - x0) / fwhm) ** 2)) ** 2
+    b = -128 * amp * (x - x0) ** 2 / (fwhm ** 4 * (1 + (2 * (x - x0) / fwhm) ** 2) ** 3)
     return a + b
 
 
@@ -169,12 +190,24 @@ def gaussian_d(x, x0, amp, fwhm):
     """
     Derivative of the gaussian function defined above
     """
-    return -8 * log(2) * amp * (x-x0) * exp(-log(2)*(2*(x-x0)/fwhm)**2)  /  fwhm**2
+    return (
+        -8
+        * log(2)
+        * amp
+        * (x - x0)
+        * exp(-log(2) * (2 * (x - x0) / fwhm) ** 2)
+        / fwhm ** 2
+    )
+
 
 def gaussian_dd(x, x0, amp, fwhm):
     """
     Second derivative of the gaussian defined above
     """
-    a = -8 * log(2) * amp * exp(-log(2)*(2*(x-x0)/fwhm)**2)  /  fwhm**2
-    b =  (8 * log(2) * (x-x0)/ fwhm**2)**2 * amp * exp(-log(2)*(2*(x-x0)/fwhm)**2) 
+    a = -8 * log(2) * amp * exp(-log(2) * (2 * (x - x0) / fwhm) ** 2) / fwhm ** 2
+    b = (
+        (8 * log(2) * (x - x0) / fwhm ** 2) ** 2
+        * amp
+        * exp(-log(2) * (2 * (x - x0) / fwhm) ** 2)
+    )
     return a + b

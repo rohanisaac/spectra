@@ -1,9 +1,13 @@
+"""
+Normalization routines for spectra
+"""
 
 import numpy as np
 import os
 from . import find_nearest_index
 
-def normalize(x, type='1-norm'):
+
+def normalize(x, type="1-norm"):
     """ Returns the normalized vector
 
     Arguments
@@ -26,13 +30,13 @@ def normalize(x, type='1-norm'):
     http://wiki.eigenvector.com/index.php?title=Advanced_Preprocessing:_Sample_Normalization
     """
 
-    if type == '1-norm':
+    if type == "1-norm":
         return x / np.sum(np.abs(x))
-    elif type == '2-norm':
+    elif type == "2-norm":
         return x / np.sum(np.square(x))
-    elif type == 'inf-norm':
+    elif type == "inf-norm":
         return x / np.max(x)
-    elif type == 'snv':
+    elif type == "snv":
         print("Probably shouldn't be using, doing nothing")
 
 
@@ -129,6 +133,7 @@ def normalize_pq(dat):
 
     return norm
 
+
 def normalize_2pt(x, y, xmin, xmax, ymin=0, ymax=1):
     """
     Normalize a spectrum, setting the y-values at two specific points to specific values (defaults to 0 and 1)
@@ -144,7 +149,7 @@ def normalize_2pt(x, y, xmin, xmax, ymin=0, ymax=1):
     y_norm = y_floor / y_floor[xmaxi]
 
     # add real scale
-    return x, ((ymax-ymin)*y_norm + ymin)
+    return x, ((ymax - ymin) * y_norm + ymin)
 
 
 def normalize_fs(y):
@@ -152,4 +157,4 @@ def normalize_fs(y):
     Scale between 0 and 1
     """
     ys = y - np.min(y)
-    return ys/np.max(ys)
+    return ys / np.max(ys)
